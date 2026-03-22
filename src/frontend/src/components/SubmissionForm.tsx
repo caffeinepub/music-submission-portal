@@ -13,16 +13,15 @@ import {
   Loader2,
   Music,
   Upload,
+  X,
   Youtube,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { SiSoundcloud, SiSpotify } from "react-icons/si";
 import { toast } from "sonner";
 import { ExternalBlob } from "../backend";
 import { useActor } from "../hooks/useActor";
-
-const TRACK_LABELS = ["Track 1", "Track 2", "Track 3"];
 
 const GENRE_OPTIONS = [
   "Rock",
@@ -57,44 +56,70 @@ export default function SubmissionForm() {
   const [submitterEmail, setSubmitterEmail] = useState("");
   const [submitterRole, setSubmitterRole] = useState("");
   const [epkFile, setEpkFile] = useState<File | null>(null);
-  const [trackFiles, setTrackFiles] = useState<(File | null)[]>([
-    null,
-    null,
-    null,
-  ]);
+  const [trackFiles, setTrackFiles] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const trackInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number[]>([0, 0, 0, 0]);
   const [success, setSuccess] = useState(false);
-  const [errors, setErrors] = useState<{
-    bandName?: string;
-    genre?: string;
-    submitterName?: string;
-    submitterEmail?: string;
-    submitterRole?: string;
-  }>({});
+  const [disclaimerChecked, setDisclaimerChecked] = useState(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
-  const validate = () => {
-    const errs: typeof errors = {};
-    if (!bandName.trim()) errs.bandName = "Band/Artist name is required.";
-    if (!genre) errs.genre = "Genre is required.";
-    if (!submitterName.trim()) errs.submitterName = "Your name is required.";
-    if (!submitterEmail.trim()) errs.submitterEmail = "Your email is required.";
-    if (!submitterRole) errs.submitterRole = "Role is required.";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
+  const getValidationErrors = (): string[] => {
+    const errs: string[] = [];
+    if (!submitterName.trim()) errs.push("Your Name is required.");
+    if (!submitterEmail.trim()) errs.push("Your Email is required.");
+    if (!submitterRole) errs.push("Role / Position is required.");
+    if (!bandName.trim()) errs.push("Band / Artist Name is required.");
+    if (!genre) errs.push("Genre is required.");
+    if (
+      !instagram.trim() &&
+      !spotify.trim() &&
+      !soundcloud.trim() &&
+      !youtube.trim()
+    )
+      errs.push("At least one Social Media Link is required.");
+    if (trackFiles.length === 0)
+      errs.push("At least one Music Track is required.");
+    if (!disclaimerChecked) errs.push("You must agree to the disclaimer.");
+    return errs;
   };
 
-  const handleTrackFile = (idx: number, file: File | null) => {
+  const addTrackFiles = (files: FileList | null) => {
+    if (!files) return;
+    const audio = Array.from(files).filter(
+      (f) => f.type.startsWith("audio/") || f.name.match(/\.(mp3|wav)$/i),
+    );
     setTrackFiles((prev) => {
-      const next = [...prev];
-      next[idx] = file;
-      return next;
+      const combined = [...prev, ...audio];
+      return combined.slice(0, 3);
     });
+  };
+
+  const removeTrack = (idx: number) => {
+    setTrackFiles((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => setIsDragging(false);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    addTrackFiles(e.dataTransfer.files);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    setSubmitAttempted(true);
+    const errs = getValidationErrors();
+    setValidationErrors(errs);
+    if (errs.length > 0) return;
     if (!actor) {
       toast.error("Not connected to backend. Please wait.");
       return;
@@ -117,19 +142,15 @@ export default function SubmissionForm() {
       const trackBlobs: ExternalBlob[] = [];
       for (let i = 0; i < trackFiles.length; i++) {
         const f = trackFiles[i];
-        if (f) {
-          const bytes = new Uint8Array(await f.arrayBuffer());
-          const blob = ExternalBlob.fromBytes(bytes).withUploadProgress(
-            (pct) => {
-              setUploadProgress((prev) => {
-                const n = [...prev];
-                n[i + 1] = pct;
-                return n;
-              });
-            },
-          );
-          trackBlobs.push(blob);
-        }
+        const bytes = new Uint8Array(await f.arrayBuffer());
+        const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((pct) => {
+          setUploadProgress((prev) => {
+            const n = [...prev];
+            n[i + 1] = pct;
+            return n;
+          });
+        });
+        trackBlobs.push(blob);
       }
 
       const socialLinks = {
@@ -175,7 +196,10 @@ export default function SubmissionForm() {
     setSubmitterEmail("");
     setSubmitterRole("");
     setEpkFile(null);
-    setTrackFiles([null, null, null]);
+    setTrackFiles([]);
+    setDisclaimerChecked(false);
+    setSubmitAttempted(false);
+    setValidationErrors([]);
   };
 
   if (success) {
@@ -194,7 +218,7 @@ export default function SubmissionForm() {
               Submission Received!
             </h2>
             <p className="text-muted-foreground mb-8">
-              Thanks for submitting to Frequency FM. Our team will review your
+              Thanks for submitting to Indie City. Our team will review your
               music and get back to you soon.
             </p>
             <button
@@ -241,6 +265,68 @@ export default function SubmissionForm() {
           data-ocid="submission.form"
           className="bg-card rounded-2xl p-8 sm:p-10 shadow-card border border-border"
         >
+          {/* Your Information */}
+          <div className="mb-8">
+            <Label className="text-sm font-semibold tracking-wide block mb-3">
+              Your Information
+            </Label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-secondary/50 rounded-xl border border-border">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="submitterName"
+                  className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                >
+                  Your Name <span className="text-teal">*</span>
+                </Label>
+                <Input
+                  id="submitterName"
+                  value={submitterName}
+                  onChange={(e) => setSubmitterName(e.target.value)}
+                  placeholder="Full name"
+                  data-ocid="submission.submitter_name.input"
+                  className="bg-secondary border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-primary h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="submitterEmail"
+                  className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                >
+                  Your Email <span className="text-teal">*</span>
+                </Label>
+                <Input
+                  id="submitterEmail"
+                  type="email"
+                  value={submitterEmail}
+                  onChange={(e) => setSubmitterEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  data-ocid="submission.submitter_email.input"
+                  className="bg-secondary border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-primary h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  Role / Position <span className="text-teal">*</span>
+                </Label>
+                <Select value={submitterRole} onValueChange={setSubmitterRole}>
+                  <SelectTrigger
+                    data-ocid="submission.submitter_role.select"
+                    className="bg-secondary border-border text-foreground h-9 text-sm"
+                  >
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border">
+                    {ROLE_OPTIONS.map((r) => (
+                      <SelectItem key={r} value={r} className="text-sm">
+                        {r}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
           {/* Row 1: Band Name + Website */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
             <div className="space-y-2">
@@ -258,14 +344,6 @@ export default function SubmissionForm() {
                 data-ocid="submission.band_name.input"
                 className="bg-secondary border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-primary"
               />
-              {errors.bandName && (
-                <p
-                  data-ocid="submission.band_name.error_state"
-                  className="text-xs text-destructive"
-                >
-                  {errors.bandName}
-                </p>
-              )}
             </div>
             <div className="space-y-2">
               <Label
@@ -307,14 +385,6 @@ export default function SubmissionForm() {
                   ))}
                 </SelectContent>
               </Select>
-              {errors.genre && (
-                <p
-                  data-ocid="submission.genre.error_state"
-                  className="text-xs text-destructive"
-                >
-                  {errors.genre}
-                </p>
-              )}
             </div>
             <div className="space-y-2">
               <Label
@@ -339,9 +409,12 @@ export default function SubmissionForm() {
 
           {/* Social Links */}
           <div className="mb-6">
-            <Label className="text-sm font-semibold tracking-wide block mb-3">
-              Social Media Links
+            <Label className="text-sm font-semibold tracking-wide block mb-1">
+              Social Media Links <span className="text-teal">*</span>
             </Label>
+            <p className="text-xs text-muted-foreground mb-3">
+              At least one is required.
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-center gap-2">
                 <Instagram className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -388,10 +461,13 @@ export default function SubmissionForm() {
 
           {/* EPK Upload */}
           <div className="mb-6">
-            <Label className="text-sm font-semibold tracking-wide block mb-3">
+            <Label className="text-sm font-semibold tracking-wide block mb-1">
               EPK (Electronic Press Kit)
+              <span className="ml-1 text-xs text-muted-foreground font-normal">
+                (optional)
+              </span>
             </Label>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 mt-2">
               <label
                 htmlFor="epk-upload"
                 data-ocid="submission.epk.upload_button"
@@ -429,140 +505,113 @@ export default function SubmissionForm() {
               )}
           </div>
 
-          {/* Music Tracks */}
+          {/* Music Tracks - single drag/drop box */}
           <div className="mb-8">
-            <Label className="text-sm font-semibold tracking-wide block mb-3">
-              Music Tracks (up to 3)
+            <Label className="text-sm font-semibold tracking-wide block mb-1">
+              Music Tracks <span className="text-teal">*</span>
             </Label>
+            <p className="text-xs text-muted-foreground mb-3">
+              Upload up to 3 tracks (MP3 or WAV, max 50MB each).
+            </p>
 
-            {/* Submitter Info Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 p-4 bg-secondary/50 rounded-xl border border-border">
-              <div className="space-y-2">
-                <Label
-                  htmlFor="submitterName"
-                  className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
-                >
-                  Your Name <span className="text-teal">*</span>
-                </Label>
-                <Input
-                  id="submitterName"
-                  value={submitterName}
-                  onChange={(e) => setSubmitterName(e.target.value)}
-                  placeholder="Full name"
-                  data-ocid="submission.submitter_name.input"
-                  className="bg-secondary border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-primary h-9 text-sm"
-                />
-                {errors.submitterName && (
-                  <p
-                    data-ocid="submission.submitter_name.error_state"
-                    className="text-xs text-destructive"
-                  >
-                    {errors.submitterName}
-                  </p>
-                )}
+            {/* Drop zone - using a wrapping label so clicking opens file dialog */}
+            <label
+              htmlFor="track-upload"
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              data-ocid="submission.tracks.dropzone"
+              className={`flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed transition-colors ${
+                isDragging
+                  ? "border-teal bg-teal/10"
+                  : "border-border bg-secondary/50 hover:border-teal/50"
+              } ${trackFiles.length >= 3 ? "opacity-50 pointer-events-none" : "cursor-pointer"}`}
+            >
+              <Music className="w-8 h-8 text-muted-foreground" />
+              <div className="text-center">
+                <p className="text-sm font-semibold text-foreground">
+                  {trackFiles.length >= 3
+                    ? "Maximum 3 tracks reached"
+                    : "Click or drag & drop audio files here"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {trackFiles.length}/3 tracks added
+                </p>
               </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="submitterEmail"
-                  className="text-xs font-semibold tracking-wide text-muted-foreground uppercase"
-                >
-                  Your Email <span className="text-teal">*</span>
-                </Label>
-                <Input
-                  id="submitterEmail"
-                  type="email"
-                  value={submitterEmail}
-                  onChange={(e) => setSubmitterEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  data-ocid="submission.submitter_email.input"
-                  className="bg-secondary border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-primary h-9 text-sm"
-                />
-                {errors.submitterEmail && (
-                  <p
-                    data-ocid="submission.submitter_email.error_state"
-                    className="text-xs text-destructive"
-                  >
-                    {errors.submitterEmail}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                  Role / Position <span className="text-teal">*</span>
-                </Label>
-                <Select value={submitterRole} onValueChange={setSubmitterRole}>
-                  <SelectTrigger
-                    data-ocid="submission.submitter_role.select"
-                    className="bg-secondary border-border text-foreground h-9 text-sm"
-                  >
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border">
-                    {ROLE_OPTIONS.map((r) => (
-                      <SelectItem key={r} value={r} className="text-sm">
-                        {r}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.submitterRole && (
-                  <p
-                    data-ocid="submission.submitter_role.error_state"
-                    className="text-xs text-destructive"
-                  >
-                    {errors.submitterRole}
-                  </p>
-                )}
-              </div>
-            </div>
+              <input
+                ref={trackInputRef}
+                id="track-upload"
+                type="file"
+                accept="audio/mpeg,audio/wav,audio/mp3,.mp3,.wav"
+                multiple
+                disabled={trackFiles.length >= 3}
+                className="hidden"
+                onChange={(e) => addTrackFiles(e.target.files)}
+              />
+            </label>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {TRACK_LABELS.map((trackLabel, idx) => (
-                <div key={trackLabel} className="space-y-2">
-                  <label
-                    htmlFor={`track-${idx}`}
-                    data-ocid={`submission.track_${idx + 1}.upload_button`}
-                    className="cursor-pointer flex items-center justify-center gap-2 px-4 py-3 bg-teal text-primary-foreground font-bold text-xs tracking-wide uppercase rounded-full shadow-teal hover:opacity-90 transition-opacity w-full"
+            {/* Track list */}
+            {trackFiles.length > 0 && (
+              <ul className="mt-3 space-y-2">
+                {trackFiles.map((f, idx) => (
+                  <li
+                    key={f.name}
+                    className="flex items-center justify-between gap-3 px-4 py-2 bg-secondary rounded-lg border border-border"
                   >
-                    <Music className="w-3.5 h-3.5" />
-                    {trackLabel}
-                    {idx === 0 ? " *" : ""}
-                  </label>
-                  <input
-                    id={`track-${idx}`}
-                    type="file"
-                    accept="audio/mpeg,audio/wav,audio/mp3,.mp3,.wav"
-                    className="hidden"
-                    onChange={(e) =>
-                      handleTrackFile(idx, e.target.files?.[0] ?? null)
-                    }
-                  />
-                  {trackFiles[idx] ? (
-                    <p className="text-xs text-teal truncate text-center">
-                      {trackFiles[idx]!.name}
-                    </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground text-center">
-                      MP3 / WAV, max 50MB
-                    </p>
-                  )}
-                  {isSubmitting &&
-                    uploadProgress[idx + 1] > 0 &&
-                    uploadProgress[idx + 1] < 100 && (
-                      <div className="h-1 bg-border rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-teal transition-all"
-                          style={{ width: `${uploadProgress[idx + 1]}%` }}
-                        />
-                      </div>
-                    )}
-                </div>
-              ))}
-            </div>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Music className="w-3.5 h-3.5 text-teal flex-shrink-0" />
+                      <span className="text-xs text-foreground truncate">
+                        {f.name}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      {isSubmitting &&
+                        uploadProgress[idx + 1] > 0 &&
+                        uploadProgress[idx + 1] < 100 && (
+                          <div className="w-20 h-1 bg-border rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-teal transition-all"
+                              style={{ width: `${uploadProgress[idx + 1]}%` }}
+                            />
+                          </div>
+                        )}
+                      <button
+                        type="button"
+                        onClick={() => removeTrack(idx)}
+                        className="text-muted-foreground hover:text-destructive transition-colors"
+                        aria-label="Remove track"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
-          {/* Submit */}
-          <div className="flex justify-center">
+          {/* Disclaimer */}
+          <div className="mb-6 p-4 bg-secondary/50 rounded-xl border border-border">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={disclaimerChecked}
+                onChange={(e) => setDisclaimerChecked(e.target.checked)}
+                data-ocid="submission.disclaimer.checkbox"
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border border-border accent-teal cursor-pointer"
+              />
+              <span className="text-xs text-muted-foreground leading-relaxed">
+                By submitting this form, I confirm that: (1) all music submitted
+                was created by human artists and is not AI-generated; (2) I own
+                the rights to this music or have obtained the necessary
+                permissions to share it with Indie City; and (3) I understand
+                that submission does not guarantee airplay on Indie City.
+              </span>
+            </label>
+          </div>
+
+          {/* Submit button + validation errors */}
+          <div className="flex flex-col items-center gap-4">
             <button
               type="submit"
               disabled={isSubmitting}
@@ -577,6 +626,31 @@ export default function SubmissionForm() {
                 "SUBMIT YOUR MUSIC"
               )}
             </button>
+
+            {submitAttempted && validationErrors.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                data-ocid="submission.validation_errors"
+                className="w-full max-w-md bg-destructive/10 border border-destructive/30 rounded-xl p-4"
+              >
+                <p className="text-xs font-semibold text-destructive uppercase tracking-wide mb-2">
+                  Please complete the following required fields:
+                </p>
+                <ul className="space-y-1">
+                  {validationErrors.map((err) => (
+                    <li
+                      key={err}
+                      className="text-xs text-destructive flex items-start gap-1.5"
+                    >
+                      <span className="mt-0.5 flex-shrink-0">&#8226;</span>
+                      {err}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            )}
           </div>
         </motion.form>
       </div>

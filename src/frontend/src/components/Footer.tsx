@@ -22,7 +22,7 @@ export default function Footer() {
           <div className="flex items-center gap-2">
             <Radio className="w-6 h-6 text-teal" />
             <span className="font-extrabold text-sm tracking-widest text-foreground uppercase">
-              Frequency <span className="text-teal">FM</span>
+              Indie <span className="text-teal">City</span>
             </span>
           </div>
 
@@ -61,7 +61,7 @@ export default function Footer() {
         {/* Bottom strip */}
         <div className="border-t border-border py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-xs text-muted-foreground/60">
-            © {year} Frequency FM. All rights reserved.
+            © {year} Indie City. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground/60">
             Built with ♥ using{" "}
