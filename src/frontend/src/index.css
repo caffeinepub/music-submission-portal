@@ -1,0 +1,91 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+    /* Dark music venue palette */
+    --background: 0.085 0.008 165;
+    --foreground: 0.91 0 0;
+    --card: 0.14 0.006 165;
+    --card-foreground: 0.91 0 0;
+    --popover: 0.18 0.006 165;
+    --popover-foreground: 0.91 0 0;
+    --primary: 0.72 0.12 168;
+    --primary-foreground: 0.085 0.012 165;
+    --secondary: 0.1 0.005 165;
+    --secondary-foreground: 0.91 0 0;
+    --muted: 0.14 0.006 165;
+    --muted-foreground: 0.6 0 0;
+    --accent: 0.72 0.12 168;
+    --accent-foreground: 0.085 0.012 165;
+    --destructive: 0.54 0.17 27;
+    --destructive-foreground: 0.91 0 0;
+    --border: 0.27 0.006 165;
+    --input: 0.1 0.005 165;
+    --ring: 0.72 0.12 168;
+    --chart-1: 0.72 0.12 168;
+    --chart-2: 0.59 0.13 252;
+    --chart-3: 0.73 0.14 72;
+    --chart-4: 0.54 0.17 27;
+    --chart-5: 0.65 0.08 165;
+    --sidebar: 0.085 0.008 165;
+    --sidebar-foreground: 0.91 0 0;
+    --sidebar-primary: 0.72 0.12 168;
+    --sidebar-primary-foreground: 0.085 0.012 165;
+    --sidebar-accent: 0.14 0.006 165;
+    --sidebar-accent-foreground: 0.91 0 0;
+    --sidebar-border: 0.27 0.006 165;
+    --sidebar-ring: 0.72 0.12 168;
+    /* Custom status colors */
+    --status-pending: 0.73 0.14 72;
+    --status-reviewed: 0.59 0.13 252;
+    --status-accepted: 0.72 0.12 168;
+    --status-rejected: 0.54 0.17 27;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Plus Jakarta Sans", sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-teal {
+    color: oklch(var(--primary));
+  }
+  .bg-teal {
+    background-color: oklch(var(--primary));
+  }
+  .border-teal {
+    border-color: oklch(var(--primary));
+  }
+  .status-pending {
+    background-color: oklch(var(--status-pending));
+    color: oklch(0.1 0 0);
+  }
+  .status-reviewed {
+    background-color: oklch(var(--status-reviewed));
+    color: oklch(0.97 0 0);
+  }
+  .status-accepted {
+    background-color: oklch(var(--status-accepted));
+    color: oklch(0.085 0.012 165);
+  }
+  .status-rejected {
+    background-color: oklch(var(--status-rejected));
+    color: oklch(0.97 0 0);
+  }
+}
