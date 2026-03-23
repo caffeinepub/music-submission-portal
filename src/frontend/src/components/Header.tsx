@@ -4,19 +4,20 @@ import { UserRole } from "../backend";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useGetCallerRole } from "../hooks/useQueries";
 
-// Hardcoded admin principal — must match access-control.mo
 const ADMIN_PRINCIPAL =
   "mqpqn-qsle4-usj5i-uytxj-pzbwu-3ppcx-cqjq5-qtktf-nwxvx-szbij-bae";
 
 interface HeaderProps {
   onAdminClick: () => void;
   onHomeClick: () => void;
-  currentPage: "home" | "admin";
+  onSubmissionsClick: () => void;
+  currentPage: "home" | "submissions" | "admin";
 }
 
 export default function Header({
   onAdminClick,
   onHomeClick,
+  onSubmissionsClick,
   currentPage,
 }: HeaderProps) {
   const { login, clear, loginStatus, identity, isInitializing } =
@@ -25,8 +26,6 @@ export default function Header({
   const queryClient = useQueryClient();
   const isAuthenticated = !!identity;
 
-  // Check admin via hardcoded principal (immediate, no backend round-trip)
-  // also falls back to role query for belt-and-suspenders
   const principalStr = identity?.getPrincipal().toString();
   const isAdmin =
     (isAuthenticated && principalStr === ADMIN_PRINCIPAL) ||
@@ -50,10 +49,19 @@ export default function Header({
     }
   };
 
+  const handleNavClick = (item: string) => {
+    if (item === "HOME") {
+      onHomeClick();
+    } else if (item === "SUBMISSIONS") {
+      onSubmissionsClick();
+    } else {
+      onHomeClick();
+    }
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Logo */}
         <button
           type="button"
           onClick={onHomeClick}
@@ -67,37 +75,29 @@ export default function Header({
           </span>
         </button>
 
-        {/* Nav */}
         <nav className="hidden md:flex items-center gap-8">
           {["HOME", "LISTEN LIVE", "SUBMISSIONS", "ABOUT", "CONTACT"].map(
-            (item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => {
-                  onHomeClick();
-                  if (item === "SUBMISSIONS") {
-                    setTimeout(() => {
-                      document
-                        .getElementById("submit")
-                        ?.scrollIntoView({ behavior: "smooth" });
-                    }, 50);
-                  }
-                }}
-                data-ocid={`nav.${item.toLowerCase().replace(" ", "_")}.link`}
-                className={`text-xs font-semibold tracking-widest transition-colors hover:text-teal ${
-                  item === "SUBMISSIONS" && currentPage === "home"
-                    ? "text-teal"
-                    : "text-foreground/80"
-                }`}
-              >
-                {item}
-              </button>
-            ),
+            (item) => {
+              const isActive =
+                (item === "HOME" && currentPage === "home") ||
+                (item === "SUBMISSIONS" && currentPage === "submissions");
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => handleNavClick(item)}
+                  data-ocid={`nav.${item.toLowerCase().replace(" ", "_")}.link`}
+                  className={`text-xs font-semibold tracking-widest transition-colors hover:text-teal ${
+                    isActive ? "text-teal" : "text-foreground/80"
+                  }`}
+                >
+                  {item}
+                </button>
+              );
+            },
           )}
         </nav>
 
-        {/* Auth button */}
         <div className="flex items-center gap-3">
           {isAuthenticated && isAdmin && (
             <button

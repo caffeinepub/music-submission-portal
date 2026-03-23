@@ -17,7 +17,7 @@ const queryClient = new QueryClient({
   },
 });
 
-type Page = "home" | "admin";
+type Page = "home" | "submissions" | "admin";
 
 function AppContent() {
   const [page, setPage] = useState<Page>("home");
@@ -27,17 +27,15 @@ function AppContent() {
       <Header
         onAdminClick={() => setPage("admin")}
         onHomeClick={() => setPage("home")}
+        onSubmissionsClick={() => setPage("submissions")}
         currentPage={page}
       />
       <main className="flex-1 pt-16">
-        {page === "home" ? (
-          <>
-            <Hero />
-            <SubmissionForm />
-          </>
-        ) : (
-          <AdminDashboard />
+        {page === "home" && (
+          <Hero onSubmissionsClick={() => setPage("submissions")} />
         )}
+        {page === "submissions" && <SubmissionForm />}
+        {page === "admin" && <AdminDashboard />}
       </main>
       <Footer />
       <Toaster richColors position="top-right" />

@@ -1,16 +1,15 @@
 import { motion } from "motion/react";
 
-export default function Hero() {
-  const scrollToSubmit = () => {
-    document.getElementById("submit")?.scrollIntoView({ behavior: "smooth" });
-  };
+interface HeroProps {
+  onSubmissionsClick: () => void;
+}
 
+export default function Hero({ onSubmissionsClick }: HeroProps) {
   return (
     <section
       id="home"
       className="relative min-h-[92vh] flex items-center justify-center overflow-hidden"
     >
-      {/* Background image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
@@ -19,7 +18,6 @@ export default function Hero() {
           filter: "grayscale(100%)",
         }}
       />
-      {/* Dark overlay with gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-background" />
       <div
         className="absolute inset-0"
@@ -29,7 +27,6 @@ export default function Hero() {
         }}
       />
 
-      {/* Content */}
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -57,7 +54,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-          onClick={scrollToSubmit}
+          onClick={onSubmissionsClick}
           data-ocid="hero.submit_tracks.button"
           className="inline-flex items-center gap-2 px-8 py-4 bg-teal text-primary-foreground font-bold tracking-widest text-sm uppercase rounded-full shadow-teal hover:opacity-90 active:scale-95 transition-all"
         >
