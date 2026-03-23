@@ -204,18 +204,12 @@ export default function SubmissionForm() {
       const normalizedSoundcloud = normalizeUrl(soundcloud);
       const normalizedYoutube = normalizeUrl(youtube);
 
-      // Build socialLinks only with keys that have actual string values
-      // to avoid IDL encoding issues with undefined properties
-      const socialLinks: {
-        instagram?: string;
-        spotify?: string;
-        soundcloud?: string;
-        youtube?: string;
-      } = {};
-      if (normalizedInstagram) socialLinks.instagram = normalizedInstagram;
-      if (normalizedSpotify) socialLinks.spotify = normalizedSpotify;
-      if (normalizedSoundcloud) socialLinks.soundcloud = normalizedSoundcloud;
-      if (normalizedYoutube) socialLinks.youtube = normalizedYoutube;
+      const socialLinks = {
+        instagram: normalizedInstagram || null,
+        spotify: normalizedSpotify || null,
+        soundcloud: normalizedSoundcloud || null,
+        youtube: normalizedYoutube || null,
+      };
 
       await (resolvedActor as any).submitBand(
         bandName.trim(),

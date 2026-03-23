@@ -14,9 +14,6 @@ module {
     userRoles : Map.Map<Principal, UserRole>;
   };
 
-  // Hardcoded admin principal -- only this identity can access the dashboard
-  let ADMIN_PRINCIPAL : Text = "mqpqn-qsle4-usj5i-uytxj-pzbwu-3ppcx-cqjq5-qtktf-nwxvx-szbij-bae";
-
   public func initState() : AccessControlState {
     {
       var adminAssigned = false;
@@ -24,10 +21,9 @@ module {
     };
   };
 
+  // First principal that calls this function becomes admin, all other principals become users.
   public func initialize(state : AccessControlState, caller : Principal, adminToken : Text, userProvidedToken : Text) {
     if (caller.isAnonymous()) { return };
-    // Hardcoded admin needs no registration
-    if (caller.toText() == ADMIN_PRINCIPAL) { return };
     switch (state.userRoles.get(caller)) {
       case (?_) {};
       case (null) {
@@ -43,11 +39,11 @@ module {
 
   public func getUserRole(state : AccessControlState, caller : Principal) : UserRole {
     if (caller.isAnonymous()) { return #guest };
-    // Hardcoded admin always gets admin role without needing registration
-    if (caller.toText() == ADMIN_PRINCIPAL) { return #admin };
     switch (state.userRoles.get(caller)) {
       case (?role) { role };
-      case (null) { #guest }; // Unknown users get guest role, never trap
+      case (null) {
+        Runtime.trap("User is not registered");
+      };
     };
   };
 
@@ -66,8 +62,6 @@ module {
   };
 
   public func isAdmin(state : AccessControlState, caller : Principal) : Bool {
-    // Check hardcoded principal first
-    if (caller.toText() == ADMIN_PRINCIPAL) { return true };
     getUserRole(state, caller) == #admin;
   };
 };
