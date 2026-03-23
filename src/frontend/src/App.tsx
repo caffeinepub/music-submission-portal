@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
 import AdminDashboard from "./components/AdminDashboard";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
@@ -16,18 +17,27 @@ const queryClient = new QueryClient({
   },
 });
 
+type Page = "home" | "admin";
+
 function AppContent() {
-  const scrollToAdmin = () => {
-    document.getElementById("admin")?.scrollIntoView({ behavior: "smooth" });
-  };
+  const [page, setPage] = useState<Page>("home");
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Header onAdminClick={scrollToAdmin} />
+      <Header
+        onAdminClick={() => setPage("admin")}
+        onHomeClick={() => setPage("home")}
+        currentPage={page}
+      />
       <main className="flex-1 pt-16">
-        <Hero />
-        <SubmissionForm />
-        <AdminDashboard />
+        {page === "home" ? (
+          <>
+            <Hero />
+            <SubmissionForm />
+          </>
+        ) : (
+          <AdminDashboard />
+        )}
       </main>
       <Footer />
       <Toaster richColors position="top-right" />

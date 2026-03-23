@@ -58,6 +58,13 @@ const isValidSpotify = (url: string): boolean =>
 const isValidYoutube = (url: string): boolean =>
   !url.trim() || /(youtube\.com|youtu\.be)/i.test(url.trim());
 
+const normalizeUrl = (url: string): string => {
+  const trimmed = url.trim();
+  if (!trimmed) return trimmed;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+};
+
 export default function SubmissionForm() {
   const { actor, isFetching } = useActor();
   const [bandName, setBandName] = useState("");
@@ -98,13 +105,13 @@ export default function SubmissionForm() {
       !youtube.trim();
     if (noSocialLink) errs.push("At least one Social Media Link is required.");
     else {
-      if (instagram.trim() && !isValidInstagram(instagram))
+      if (instagram.trim() && !isValidInstagram(normalizeUrl(instagram)))
         errs.push("Instagram URL must be a valid instagram.com link.");
-      if (soundcloud.trim() && !isValidSoundcloud(soundcloud))
+      if (soundcloud.trim() && !isValidSoundcloud(normalizeUrl(soundcloud)))
         errs.push("SoundCloud URL must be a valid soundcloud.com link.");
-      if (spotify.trim() && !isValidSpotify(spotify))
+      if (spotify.trim() && !isValidSpotify(normalizeUrl(spotify)))
         errs.push("Spotify URL must be a valid spotify.com link.");
-      if (youtube.trim() && !isValidYoutube(youtube))
+      if (youtube.trim() && !isValidYoutube(normalizeUrl(youtube)))
         errs.push("YouTube URL must be a valid youtube.com or youtu.be link.");
     }
     if (trackFiles.length === 0)
@@ -192,14 +199,19 @@ export default function SubmissionForm() {
         trackBlobs.push(blob);
       }
 
+      const normalizedInstagram = normalizeUrl(instagram);
+      const normalizedSpotify = normalizeUrl(spotify);
+      const normalizedSoundcloud = normalizeUrl(soundcloud);
+      const normalizedYoutube = normalizeUrl(youtube);
+
       const socialLinks = {
-        instagram: instagram.trim() || undefined,
-        spotify: spotify.trim() || undefined,
-        soundcloud: soundcloud.trim() || undefined,
-        youtube: youtube.trim() || undefined,
+        instagram: normalizedInstagram || undefined,
+        spotify: normalizedSpotify || undefined,
+        soundcloud: normalizedSoundcloud || undefined,
+        youtube: normalizedYoutube || undefined,
       };
 
-      await resolvedActor.submitBand(
+      await (resolvedActor as any).submitBand(
         bandName.trim(),
         genre,
         specificGenre.trim() || null,
@@ -210,6 +222,8 @@ export default function SubmissionForm() {
         socialLinks,
         epkBlob,
         trackBlobs,
+        epkFile ? epkFile.name : null,
+        trackFiles.map((f) => f.name),
       );
       setSuccess(true);
       toast.success("Submission received! We'll be in touch.");
@@ -519,7 +533,7 @@ export default function SubmissionForm() {
                 </div>
                 {submitAttempted &&
                   instagram.trim() &&
-                  !isValidInstagram(instagram) && (
+                  !isValidInstagram(normalizeUrl(instagram)) && (
                     <p className="text-xs text-destructive mt-1 ml-6">
                       Must be a valid instagram.com URL.
                     </p>
@@ -538,7 +552,7 @@ export default function SubmissionForm() {
                 </div>
                 {submitAttempted &&
                   spotify.trim() &&
-                  !isValidSpotify(spotify) && (
+                  !isValidSpotify(normalizeUrl(spotify)) && (
                     <p className="text-xs text-destructive mt-1 ml-6">
                       Must be a valid spotify.com URL.
                     </p>
@@ -557,7 +571,7 @@ export default function SubmissionForm() {
                 </div>
                 {submitAttempted &&
                   soundcloud.trim() &&
-                  !isValidSoundcloud(soundcloud) && (
+                  !isValidSoundcloud(normalizeUrl(soundcloud)) && (
                     <p className="text-xs text-destructive mt-1 ml-6">
                       Must be a valid soundcloud.com URL.
                     </p>
@@ -576,7 +590,7 @@ export default function SubmissionForm() {
                 </div>
                 {submitAttempted &&
                   youtube.trim() &&
-                  !isValidYoutube(youtube) && (
+                  !isValidYoutube(normalizeUrl(youtube)) && (
                     <p className="text-xs text-destructive mt-1 ml-6">
                       Must be a valid youtube.com or youtu.be URL.
                     </p>

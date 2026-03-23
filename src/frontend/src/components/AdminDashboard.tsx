@@ -14,7 +14,11 @@ import { useEffect, useState } from "react";
 import { SiSoundcloud, SiSpotify } from "react-icons/si";
 import { toast } from "sonner";
 import { SubmissionLabel, Tab } from "../backend";
-import type { Submission } from "../backend";
+import type { Submission as BaseSubmission } from "../backend";
+type Submission = BaseSubmission & {
+  epkFilename?: string;
+  trackFilenames?: string[];
+};
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import {
   useClaimAdmin,
@@ -257,7 +261,8 @@ function SubmissionAccordionRow({
                       data-ocid={`admin.submission.epk.${index}`}
                       className="inline-flex items-center gap-1.5 text-xs text-teal hover:underline"
                     >
-                      <Download className="w-3.5 h-3.5" /> Download EPK
+                      <Download className="w-3.5 h-3.5" />
+                      {submission.epkFilename || "Download EPK"}
                     </a>
                   </div>
                 )}
@@ -271,27 +276,30 @@ function SubmissionAccordionRow({
                   </p>
                   {submission.trackBlobs.length > 0 ? (
                     <div className="space-y-3">
-                      {submission.trackBlobs.map((blob, i) => (
-                        <div
-                          key={`track-${submission.id}-${i}`}
-                          className="flex items-center gap-2"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <AudioPlayer
-                              src={blob.getDirectURL()}
-                              label={`Track ${i + 1}`}
-                            />
-                          </div>
-                          <a
-                            href={blob.getDirectURL()}
-                            download
-                            data-ocid={`admin.submission.track_download.${index}`}
-                            className="flex-shrink-0 flex items-center justify-center w-7 h-7 text-muted-foreground hover:text-teal border border-border hover:border-teal rounded transition-colors"
+                      {submission.trackBlobs.map((blob, i) => {
+                        const url = blob.getDirectURL();
+                        const filename =
+                          submission.trackFilenames?.[i] || `Track ${i + 1}`;
+                        return (
+                          <div
+                            key={`track-${submission.id}-${i}`}
+                            className="flex items-center gap-2"
                           >
-                            <Download className="w-3.5 h-3.5" />
-                          </a>
-                        </div>
-                      ))}
+                            <div className="flex-1 min-w-0">
+                              <AudioPlayer src={url} label={filename} />
+                            </div>
+                            <a
+                              href={url}
+                              download={filename}
+                              data-ocid={`admin.submission.track_download.${index}`}
+                              className="flex-shrink-0 flex items-center justify-center w-7 h-7 text-muted-foreground hover:text-teal border border-border hover:border-teal rounded transition-colors"
+                              title={`Download ${filename}`}
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                            </a>
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <span className="text-xs text-muted-foreground/40">
@@ -597,11 +605,8 @@ export default function AdminDashboard() {
             <h3 className="text-xl font-bold text-foreground mb-2">
               Admin Access Required
             </h3>
-            <p className="text-muted-foreground text-sm mb-2">
-              Sign in to view and manage submissions.
-            </p>
-            <p className="text-muted-foreground/60 text-xs mb-8">
-              The first person to log in will be assigned as admin.
+            <p className="text-muted-foreground text-sm mb-8">
+              Sign in with Internet Identity to access the dashboard.
             </p>
             <button
               type="button"
@@ -658,7 +663,7 @@ export default function AdminDashboard() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 715.636 5.636m12.728 12.728L5.636 5.636"
                 />
               </svg>
             </div>

@@ -35,6 +35,8 @@ export interface Submission {
   'isShortlisted' : boolean,
   'trackBlobs' : Array<ExternalBlob>,
   'epkBlob' : [] | [ExternalBlob],
+  'epkFilename' : [] | [string],
+  'trackFilenames' : Array<string>,
 }
 export type SubmissionLabel = { 'shortlisted' : null } |
   { 'archived' : null } |
@@ -105,6 +107,8 @@ export interface _SERVICE {
       SocialLinks,
       [] | [ExternalBlob],
       Array<ExternalBlob>,
+      [] | [string],
+      Array<string>,
     ],
     string
   >,

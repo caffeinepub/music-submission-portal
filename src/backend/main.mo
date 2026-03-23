@@ -2,7 +2,6 @@ import Map "mo:core/Map";
 import Principal "mo:core/Principal";
 import Iter "mo:core/Iter";
 import Runtime "mo:core/Runtime";
-import Array "mo:core/Array";
 import Time "mo:core/Time";
 import Int "mo:core/Int";
 import Storage "blob-storage/Storage";
@@ -44,7 +43,8 @@ actor {
     #newSubmissions;
   };
 
-  public type Submission = {
+  // Stable storage type -- do NOT add fields here without a migration
+  type Submission = {
     id : Text;
     bandName : Text;
     genre : Text;
@@ -63,12 +63,68 @@ actor {
     submittedAt : Int.Int;
   };
 
+  // Separate stable map for filenames (avoids Submission type migration)
+  type FileInfo = {
+    epkFilename : ?Text;
+    trackFilenames : [Text];
+  };
+
+  // Public return type that includes filenames
+  public type SubmissionView = {
+    id : Text;
+    bandName : Text;
+    genre : Text;
+    specificGenre : ?Text;
+    website : ?Text;
+    submitterName : ?Text;
+    submitterEmail : ?Text;
+    submitterRole : ?Text;
+    socialLinks : SocialLinks;
+    epkBlob : ?Storage.ExternalBlob;
+    epkFilename : ?Text;
+    trackBlobs : [Storage.ExternalBlob];
+    trackFilenames : [Text];
+    status : SubmissionStatus;
+    isArchived : Bool;
+    isShortlisted : Bool;
+    isFaved : Bool;
+    submittedAt : Int.Int;
+  };
+
   public type UserProfile = {
     name : Text;
   };
 
   let userProfiles = Map.empty<Principal, UserProfile>();
   let submissions = Map.empty<Text, Submission>();
+  let fileInfos = Map.empty<Text, FileInfo>();
+
+  func toView(s : Submission) : SubmissionView {
+    let fi : FileInfo = switch (fileInfos.get(s.id)) {
+      case (?f) { f };
+      case (null) { { epkFilename = null; trackFilenames = [] } };
+    };
+    {
+      id = s.id;
+      bandName = s.bandName;
+      genre = s.genre;
+      specificGenre = s.specificGenre;
+      website = s.website;
+      submitterName = s.submitterName;
+      submitterEmail = s.submitterEmail;
+      submitterRole = s.submitterRole;
+      socialLinks = s.socialLinks;
+      epkBlob = s.epkBlob;
+      epkFilename = fi.epkFilename;
+      trackBlobs = s.trackBlobs;
+      trackFilenames = fi.trackFilenames;
+      status = s.status;
+      isArchived = s.isArchived;
+      isShortlisted = s.isShortlisted;
+      isFaved = s.isFaved;
+      submittedAt = s.submittedAt;
+    };
+  };
 
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
@@ -91,7 +147,7 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  public shared ({ caller }) func submitBand(
+  public shared ({ caller = _ }) func submitBand(
     bandName : Text,
     genre : Text,
     specificGenre : ?Text,
@@ -102,6 +158,8 @@ actor {
     socialLinks : SocialLinks,
     epkBlob : ?Storage.ExternalBlob,
     trackBlobs : [Storage.ExternalBlob],
+    epkFilename : ?Text,
+    trackFilenames : [Text],
   ) : async Text {
     let id = bandName.concat(Time.now().toText());
     let submission : Submission = {
@@ -123,6 +181,7 @@ actor {
       submittedAt = Time.now();
     };
     submissions.add(id, submission);
+    fileInfos.add(id, { epkFilename; trackFilenames });
     id;
   };
 
@@ -164,26 +223,27 @@ actor {
       Runtime.trap("Submission not found");
     };
     submissions.remove(id);
+    fileInfos.remove(id);
   };
 
-  public query ({ caller }) func getSubmission(id : Text) : async Submission {
+  public query ({ caller }) func getSubmission(id : Text) : async SubmissionView {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can view submissions");
     };
     switch (submissions.get(id)) {
       case (null) { Runtime.trap("Submission not found") };
-      case (?submission) { submission };
+      case (?submission) { toView(submission) };
     };
   };
 
-  public query ({ caller }) func getAllSubmissions() : async [Submission] {
+  public query ({ caller }) func getAllSubmissions() : async [SubmissionView] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can view all submissions");
     };
-    submissions.values().toArray();
+    submissions.values().map(toView).toArray();
   };
 
-  public query ({ caller }) func getSubmissionsByTab(tab : Tab) : async [Submission] {
+  public query ({ caller }) func getSubmissionsByTab(tab : Tab) : async [SubmissionView] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admins can view submissions by tab");
     };
@@ -199,6 +259,6 @@ actor {
       }
     );
 
-    filtered.toArray();
+    filtered.map(toView).toArray();
   };
 };

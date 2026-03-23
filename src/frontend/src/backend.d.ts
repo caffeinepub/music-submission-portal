@@ -37,6 +37,8 @@ export interface Submission {
     isShortlisted: boolean;
     trackBlobs: Array<ExternalBlob>;
     epkBlob?: ExternalBlob;
+    epkFilename?: string;
+    trackFilenames: Array<string>;
 }
 export type Int = bigint;
 export interface UserProfile {
@@ -76,6 +78,6 @@ export interface backendInterface {
     isCallerAdmin(): Promise<boolean>;
     labelSubmission(id: string, submissionLabel: SubmissionLabel, value: boolean): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    submitBand(bandName: string, genre: string, specificGenre: string | null, website: string | null, submitterName: string | null, submitterEmail: string | null, submitterRole: string | null, socialLinks: SocialLinks, epkBlob: ExternalBlob | null, trackBlobs: Array<ExternalBlob>): Promise<string>;
+    submitBand(bandName: string, genre: string, specificGenre: string | null, website: string | null, submitterName: string | null, submitterEmail: string | null, submitterRole: string | null, socialLinks: SocialLinks, epkBlob: ExternalBlob | null, trackBlobs: Array<ExternalBlob>, epkFilename: string | null, trackFilenames: Array<string>): Promise<string>;
     updateSubmissionStatus(id: string, status: SubmissionStatus): Promise<void>;
 }
