@@ -55,6 +55,8 @@ export const Submission = IDL.Record({
   'isShortlisted' : IDL.Bool,
   'trackBlobs' : IDL.Vec(ExternalBlob),
   'epkBlob' : IDL.Opt(ExternalBlob),
+  'epkFilename' : IDL.Opt(IDL.Text),
+  'trackFilenames' : IDL.Vec(IDL.Text),
 });
 export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const Tab = IDL.Variant({
@@ -124,6 +126,8 @@ export const idlService = IDL.Service({
         SocialLinks,
         IDL.Opt(ExternalBlob),
         IDL.Vec(ExternalBlob),
+        IDL.Opt(IDL.Text),
+        IDL.Vec(IDL.Text),
       ],
       [IDL.Text],
       [],
@@ -181,6 +185,8 @@ export const idlFactory = ({ IDL }) => {
     'isShortlisted' : IDL.Bool,
     'trackBlobs' : IDL.Vec(ExternalBlob),
     'epkBlob' : IDL.Opt(ExternalBlob),
+    'epkFilename' : IDL.Opt(IDL.Text),
+    'trackFilenames' : IDL.Vec(IDL.Text),
   });
   const UserProfile = IDL.Record({ 'name' : IDL.Text });
   const Tab = IDL.Variant({
@@ -250,6 +256,8 @@ export const idlFactory = ({ IDL }) => {
           SocialLinks,
           IDL.Opt(ExternalBlob),
           IDL.Vec(ExternalBlob),
+          IDL.Opt(IDL.Text),
+          IDL.Vec(IDL.Text),
         ],
         [IDL.Text],
         [],

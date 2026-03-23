@@ -119,6 +119,8 @@ export interface Submission {
     isShortlisted: boolean;
     trackBlobs: Array<ExternalBlob>;
     epkBlob?: ExternalBlob;
+    epkFilename?: string;
+    trackFilenames: Array<string>;
 }
 export type Int = bigint;
 export interface UserProfile {
@@ -169,7 +171,7 @@ export interface backendInterface {
     isCallerAdmin(): Promise<boolean>;
     labelSubmission(id: string, submissionLabel: SubmissionLabel, value: boolean): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
-    submitBand(bandName: string, genre: string, specificGenre: string | null, website: string | null, submitterName: string | null, submitterEmail: string | null, submitterRole: string | null, socialLinks: SocialLinks, epkBlob: ExternalBlob | null, trackBlobs: Array<ExternalBlob>): Promise<string>;
+    submitBand(bandName: string, genre: string, specificGenre: string | null, website: string | null, submitterName: string | null, submitterEmail: string | null, submitterRole: string | null, socialLinks: SocialLinks, epkBlob: ExternalBlob | null, trackBlobs: Array<ExternalBlob>, epkFilename: string | null, trackFilenames: Array<string>): Promise<string>;
     updateSubmissionStatus(id: string, status: SubmissionStatus): Promise<void>;
 }
 import type { ExternalBlob as _ExternalBlob, Int as _Int, SocialLinks as _SocialLinks, Submission as _Submission, SubmissionLabel as _SubmissionLabel, SubmissionStatus as _SubmissionStatus, Tab as _Tab, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
@@ -427,17 +429,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async submitBand(arg0: string, arg1: string, arg2: string | null, arg3: string | null, arg4: string | null, arg5: string | null, arg6: string | null, arg7: SocialLinks, arg8: ExternalBlob | null, arg9: Array<ExternalBlob>): Promise<string> {
+    async submitBand(arg0: string, arg1: string, arg2: string | null, arg3: string | null, arg4: string | null, arg5: string | null, arg6: string | null, arg7: SocialLinks, arg8: ExternalBlob | null, arg9: Array<ExternalBlob>, arg10: string | null, arg11: Array<string>): Promise<string> {
         if (this.processError) {
             try {
-                const result = await this.actor.submitBand(arg0, arg1, to_candid_opt_n28(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg3), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg6), to_candid_SocialLinks_n29(this._uploadFile, this._downloadFile, arg7), await to_candid_opt_n31(this._uploadFile, this._downloadFile, arg8), await to_candid_vec_n33(this._uploadFile, this._downloadFile, arg9));
+                const result = await this.actor.submitBand(arg0, arg1, to_candid_opt_n28(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg3), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg6), to_candid_SocialLinks_n29(this._uploadFile, this._downloadFile, arg7), await to_candid_opt_n31(this._uploadFile, this._downloadFile, arg8), await to_candid_vec_n33(this._uploadFile, this._downloadFile, arg9), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg10), arg11);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.submitBand(arg0, arg1, to_candid_opt_n28(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg3), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg6), to_candid_SocialLinks_n29(this._uploadFile, this._downloadFile, arg7), await to_candid_opt_n31(this._uploadFile, this._downloadFile, arg8), await to_candid_vec_n33(this._uploadFile, this._downloadFile, arg9));
+            const result = await this.actor.submitBand(arg0, arg1, to_candid_opt_n28(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg3), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg6), to_candid_SocialLinks_n29(this._uploadFile, this._downloadFile, arg7), await to_candid_opt_n31(this._uploadFile, this._downloadFile, arg8), await to_candid_vec_n33(this._uploadFile, this._downloadFile, arg9), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg10), arg11);
             return result;
         }
     }
@@ -506,6 +508,8 @@ async function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promi
     isShortlisted: boolean;
     trackBlobs: Array<_ExternalBlob>;
     epkBlob: [] | [_ExternalBlob];
+    epkFilename: [] | [string];
+    trackFilenames: Array<string>;
 }): Promise<{
     id: string;
     status: SubmissionStatus;
@@ -523,6 +527,8 @@ async function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promi
     isShortlisted: boolean;
     trackBlobs: Array<ExternalBlob>;
     epkBlob?: ExternalBlob;
+    epkFilename?: string;
+    trackFilenames: Array<string>;
 }> {
     return {
         id: value.id,
@@ -540,7 +546,9 @@ async function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promi
         submitterEmail: record_opt_to_undefined(from_candid_opt_n15(_uploadFile, _downloadFile, value.submitterEmail)),
         isShortlisted: value.isShortlisted,
         trackBlobs: await from_candid_vec_n18(_uploadFile, _downloadFile, value.trackBlobs),
-        epkBlob: record_opt_to_undefined(await from_candid_opt_n20(_uploadFile, _downloadFile, value.epkBlob))
+        epkBlob: record_opt_to_undefined(await from_candid_opt_n20(_uploadFile, _downloadFile, value.epkBlob)),
+        epkFilename: record_opt_to_undefined(from_candid_opt_n15(_uploadFile, _downloadFile, value.epkFilename)),
+        trackFilenames: value.trackFilenames
     };
 }
 function from_candid_record_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {

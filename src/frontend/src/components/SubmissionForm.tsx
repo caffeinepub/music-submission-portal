@@ -215,7 +215,7 @@ export default function SubmissionForm() {
         bandName.trim(),
         genre,
         specificGenre.trim() || null,
-        website.trim() || null,
+        normalizeUrl(website) || null,
         submitterName.trim() || null,
         submitterEmail.trim() || null,
         submitterRole.trim() || null,
@@ -453,7 +453,7 @@ export default function SubmissionForm() {
               </Label>
               <Input
                 id="website"
-                type="url"
+                type="text"
                 value={website}
                 onChange={(e) => setWebsite(e.target.value)}
                 placeholder="https://yourband.com"
@@ -767,21 +767,6 @@ export default function SubmissionForm() {
 
           {/* Submit button + validation errors */}
           <div className="flex flex-col items-center gap-4">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              data-ocid="submission.submit.button"
-              className="flex items-center gap-2 px-10 py-4 bg-teal text-primary-foreground font-bold tracking-widest text-sm uppercase rounded-full shadow-teal hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> SUBMITTING...
-                </>
-              ) : (
-                "SUBMIT YOUR MUSIC"
-              )}
-            </button>
-
             {submitAttempted && validationErrors.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
@@ -806,6 +791,21 @@ export default function SubmissionForm() {
                 </ul>
               </motion.div>
             )}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              data-ocid="submission.submit.button"
+              className="flex items-center gap-2 px-10 py-4 bg-teal text-primary-foreground font-bold tracking-widest text-sm uppercase rounded-full shadow-teal hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> SUBMITTING...
+                </>
+              ) : (
+                "SUBMIT YOUR MUSIC"
+              )}
+            </button>
           </div>
         </motion.form>
       </div>
