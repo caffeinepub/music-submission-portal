@@ -4,9 +4,6 @@ import { UserRole } from "../backend";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useGetCallerRole } from "../hooks/useQueries";
 
-const ADMIN_PRINCIPAL =
-  "mqpqn-qsle4-usj5i-uytxj-pzbwu-3ppcx-cqjq5-qtktf-nwxvx-szbij-bae";
-
 interface HeaderProps {
   onAdminClick: () => void;
   onHomeClick: () => void;
@@ -26,10 +23,7 @@ export default function Header({
   const queryClient = useQueryClient();
   const isAuthenticated = !!identity;
 
-  const principalStr = identity?.getPrincipal().toString();
-  const isAdmin =
-    (isAuthenticated && principalStr === ADMIN_PRINCIPAL) ||
-    role === UserRole.admin;
+  const isAdmin = isAuthenticated && role === UserRole.admin;
 
   const isLoggingIn = loginStatus === "logging-in";
 
@@ -99,7 +93,7 @@ export default function Header({
         </nav>
 
         <div className="flex items-center gap-3">
-          {isAuthenticated && isAdmin && (
+          {isAdmin && (
             <button
               type="button"
               onClick={currentPage === "admin" ? onHomeClick : onAdminClick}
