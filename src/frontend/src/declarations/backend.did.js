@@ -46,14 +46,28 @@ export const Submission = IDL.Record({
   'socialLinks' : SocialLinks,
   'submittedAt' : Int,
   'specificGenre' : IDL.Opt(IDL.Text),
+  'isArchived' : IDL.Bool,
   'bandName' : IDL.Text,
   'website' : IDL.Opt(IDL.Text),
   'genre' : IDL.Text,
+  'isFaved' : IDL.Bool,
   'submitterEmail' : IDL.Opt(IDL.Text),
+  'isShortlisted' : IDL.Bool,
   'trackBlobs' : IDL.Vec(ExternalBlob),
   'epkBlob' : IDL.Opt(ExternalBlob),
 });
 export const UserProfile = IDL.Record({ 'name' : IDL.Text });
+export const Tab = IDL.Variant({
+  'newSubmissions' : IDL.Null,
+  'shortlisted' : IDL.Null,
+  'archived' : IDL.Null,
+  'faved' : IDL.Null,
+});
+export const SubmissionLabel = IDL.Variant({
+  'shortlisted' : IDL.Null,
+  'archived' : IDL.Null,
+  'faved' : IDL.Null,
+});
 
 export const idlService = IDL.Service({
   '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -89,12 +103,14 @@ export const idlService = IDL.Service({
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getSubmission' : IDL.Func([IDL.Text], [Submission], ['query']),
+  'getSubmissionsByTab' : IDL.Func([Tab], [IDL.Vec(Submission)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'labelSubmission' : IDL.Func([IDL.Text, SubmissionLabel, IDL.Bool], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'submitBand' : IDL.Func(
       [
@@ -156,14 +172,28 @@ export const idlFactory = ({ IDL }) => {
     'socialLinks' : SocialLinks,
     'submittedAt' : Int,
     'specificGenre' : IDL.Opt(IDL.Text),
+    'isArchived' : IDL.Bool,
     'bandName' : IDL.Text,
     'website' : IDL.Opt(IDL.Text),
     'genre' : IDL.Text,
+    'isFaved' : IDL.Bool,
     'submitterEmail' : IDL.Opt(IDL.Text),
+    'isShortlisted' : IDL.Bool,
     'trackBlobs' : IDL.Vec(ExternalBlob),
     'epkBlob' : IDL.Opt(ExternalBlob),
   });
   const UserProfile = IDL.Record({ 'name' : IDL.Text });
+  const Tab = IDL.Variant({
+    'newSubmissions' : IDL.Null,
+    'shortlisted' : IDL.Null,
+    'archived' : IDL.Null,
+    'faved' : IDL.Null,
+  });
+  const SubmissionLabel = IDL.Variant({
+    'shortlisted' : IDL.Null,
+    'archived' : IDL.Null,
+    'faved' : IDL.Null,
+  });
   
   return IDL.Service({
     '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -199,12 +229,14 @@ export const idlFactory = ({ IDL }) => {
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getSubmission' : IDL.Func([IDL.Text], [Submission], ['query']),
+    'getSubmissionsByTab' : IDL.Func([Tab], [IDL.Vec(Submission)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'labelSubmission' : IDL.Func([IDL.Text, SubmissionLabel, IDL.Bool], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'submitBand' : IDL.Func(
         [

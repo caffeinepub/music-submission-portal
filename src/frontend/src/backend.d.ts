@@ -28,10 +28,13 @@ export interface Submission {
     socialLinks: SocialLinks;
     submittedAt: Int;
     specificGenre?: string;
+    isArchived: boolean;
     bandName: string;
     website?: string;
     genre: string;
+    isFaved: boolean;
     submitterEmail?: string;
+    isShortlisted: boolean;
     trackBlobs: Array<ExternalBlob>;
     epkBlob?: ExternalBlob;
 }
@@ -39,11 +42,22 @@ export type Int = bigint;
 export interface UserProfile {
     name: string;
 }
+export enum SubmissionLabel {
+    shortlisted = "shortlisted",
+    archived = "archived",
+    faved = "faved"
+}
 export enum SubmissionStatus {
     pending = "pending",
     rejected = "rejected",
     reviewed = "reviewed",
     accepted = "accepted"
+}
+export enum Tab {
+    newSubmissions = "newSubmissions",
+    shortlisted = "shortlisted",
+    archived = "archived",
+    faved = "faved"
 }
 export enum UserRole {
     admin = "admin",
@@ -57,8 +71,10 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getSubmission(id: string): Promise<Submission>;
+    getSubmissionsByTab(tab: Tab): Promise<Array<Submission>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
+    labelSubmission(id: string, submissionLabel: SubmissionLabel, value: boolean): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     submitBand(bandName: string, genre: string, specificGenre: string | null, website: string | null, submitterName: string | null, submitterEmail: string | null, submitterRole: string | null, socialLinks: SocialLinks, epkBlob: ExternalBlob | null, trackBlobs: Array<ExternalBlob>): Promise<string>;
     updateSubmissionStatus(id: string, status: SubmissionStatus): Promise<void>;

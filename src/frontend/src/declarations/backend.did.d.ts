@@ -26,17 +26,27 @@ export interface Submission {
   'socialLinks' : SocialLinks,
   'submittedAt' : Int,
   'specificGenre' : [] | [string],
+  'isArchived' : boolean,
   'bandName' : string,
   'website' : [] | [string],
   'genre' : string,
+  'isFaved' : boolean,
   'submitterEmail' : [] | [string],
+  'isShortlisted' : boolean,
   'trackBlobs' : Array<ExternalBlob>,
   'epkBlob' : [] | [ExternalBlob],
 }
+export type SubmissionLabel = { 'shortlisted' : null } |
+  { 'archived' : null } |
+  { 'faved' : null };
 export type SubmissionStatus = { 'pending' : null } |
   { 'rejected' : null } |
   { 'reviewed' : null } |
   { 'accepted' : null };
+export type Tab = { 'newSubmissions' : null } |
+  { 'shortlisted' : null } |
+  { 'archived' : null } |
+  { 'faved' : null };
 export interface UserProfile { 'name' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
@@ -75,8 +85,13 @@ export interface _SERVICE {
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getSubmission' : ActorMethod<[string], Submission>,
+  'getSubmissionsByTab' : ActorMethod<[Tab], Array<Submission>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'labelSubmission' : ActorMethod<
+    [string, SubmissionLabel, boolean],
+    undefined
+  >,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'submitBand' : ActorMethod<
     [

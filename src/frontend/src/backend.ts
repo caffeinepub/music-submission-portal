@@ -110,10 +110,13 @@ export interface Submission {
     socialLinks: SocialLinks;
     submittedAt: Int;
     specificGenre?: string;
+    isArchived: boolean;
     bandName: string;
     website?: string;
     genre: string;
+    isFaved: boolean;
     submitterEmail?: string;
+    isShortlisted: boolean;
     trackBlobs: Array<ExternalBlob>;
     epkBlob?: ExternalBlob;
 }
@@ -125,11 +128,22 @@ export interface _CaffeineStorageRefillResult {
     success?: boolean;
     topped_up_amount?: bigint;
 }
+export enum SubmissionLabel {
+    shortlisted = "shortlisted",
+    archived = "archived",
+    faved = "faved"
+}
 export enum SubmissionStatus {
     pending = "pending",
     rejected = "rejected",
     reviewed = "reviewed",
     accepted = "accepted"
+}
+export enum Tab {
+    newSubmissions = "newSubmissions",
+    shortlisted = "shortlisted",
+    archived = "archived",
+    faved = "faved"
 }
 export enum UserRole {
     admin = "admin",
@@ -150,13 +164,15 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getSubmission(id: string): Promise<Submission>;
+    getSubmissionsByTab(tab: Tab): Promise<Array<Submission>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
+    labelSubmission(id: string, submissionLabel: SubmissionLabel, value: boolean): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     submitBand(bandName: string, genre: string, specificGenre: string | null, website: string | null, submitterName: string | null, submitterEmail: string | null, submitterRole: string | null, socialLinks: SocialLinks, epkBlob: ExternalBlob | null, trackBlobs: Array<ExternalBlob>): Promise<string>;
     updateSubmissionStatus(id: string, status: SubmissionStatus): Promise<void>;
 }
-import type { ExternalBlob as _ExternalBlob, Int as _Int, SocialLinks as _SocialLinks, Submission as _Submission, SubmissionStatus as _SubmissionStatus, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { ExternalBlob as _ExternalBlob, Int as _Int, SocialLinks as _SocialLinks, Submission as _Submission, SubmissionLabel as _SubmissionLabel, SubmissionStatus as _SubmissionStatus, Tab as _Tab, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -341,6 +357,20 @@ export class Backend implements backendInterface {
             return from_candid_Submission_n11(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getSubmissionsByTab(arg0: Tab): Promise<Array<Submission>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getSubmissionsByTab(to_candid_Tab_n24(this._uploadFile, this._downloadFile, arg0));
+                return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getSubmissionsByTab(to_candid_Tab_n24(this._uploadFile, this._downloadFile, arg0));
+            return from_candid_vec_n10(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
         if (this.processError) {
             try {
@@ -369,6 +399,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async labelSubmission(arg0: string, arg1: SubmissionLabel, arg2: boolean): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.labelSubmission(arg0, to_candid_SubmissionLabel_n26(this._uploadFile, this._downloadFile, arg1), arg2);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.labelSubmission(arg0, to_candid_SubmissionLabel_n26(this._uploadFile, this._downloadFile, arg1), arg2);
+            return result;
+        }
+    }
     async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
         if (this.processError) {
             try {
@@ -386,28 +430,28 @@ export class Backend implements backendInterface {
     async submitBand(arg0: string, arg1: string, arg2: string | null, arg3: string | null, arg4: string | null, arg5: string | null, arg6: string | null, arg7: SocialLinks, arg8: ExternalBlob | null, arg9: Array<ExternalBlob>): Promise<string> {
         if (this.processError) {
             try {
-                const result = await this.actor.submitBand(arg0, arg1, to_candid_opt_n24(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n24(this._uploadFile, this._downloadFile, arg3), to_candid_opt_n24(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n24(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n24(this._uploadFile, this._downloadFile, arg6), to_candid_SocialLinks_n25(this._uploadFile, this._downloadFile, arg7), await to_candid_opt_n27(this._uploadFile, this._downloadFile, arg8), await to_candid_vec_n29(this._uploadFile, this._downloadFile, arg9));
+                const result = await this.actor.submitBand(arg0, arg1, to_candid_opt_n28(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg3), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg6), to_candid_SocialLinks_n29(this._uploadFile, this._downloadFile, arg7), await to_candid_opt_n31(this._uploadFile, this._downloadFile, arg8), await to_candid_vec_n33(this._uploadFile, this._downloadFile, arg9));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.submitBand(arg0, arg1, to_candid_opt_n24(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n24(this._uploadFile, this._downloadFile, arg3), to_candid_opt_n24(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n24(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n24(this._uploadFile, this._downloadFile, arg6), to_candid_SocialLinks_n25(this._uploadFile, this._downloadFile, arg7), await to_candid_opt_n27(this._uploadFile, this._downloadFile, arg8), await to_candid_vec_n29(this._uploadFile, this._downloadFile, arg9));
+            const result = await this.actor.submitBand(arg0, arg1, to_candid_opt_n28(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg3), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n28(this._uploadFile, this._downloadFile, arg6), to_candid_SocialLinks_n29(this._uploadFile, this._downloadFile, arg7), await to_candid_opt_n31(this._uploadFile, this._downloadFile, arg8), await to_candid_vec_n33(this._uploadFile, this._downloadFile, arg9));
             return result;
         }
     }
     async updateSubmissionStatus(arg0: string, arg1: SubmissionStatus): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.updateSubmissionStatus(arg0, to_candid_SubmissionStatus_n30(this._uploadFile, this._downloadFile, arg1));
+                const result = await this.actor.updateSubmissionStatus(arg0, to_candid_SubmissionStatus_n34(this._uploadFile, this._downloadFile, arg1));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.updateSubmissionStatus(arg0, to_candid_SubmissionStatus_n30(this._uploadFile, this._downloadFile, arg1));
+            const result = await this.actor.updateSubmissionStatus(arg0, to_candid_SubmissionStatus_n34(this._uploadFile, this._downloadFile, arg1));
             return result;
         }
     }
@@ -453,10 +497,13 @@ async function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promi
     socialLinks: _SocialLinks;
     submittedAt: _Int;
     specificGenre: [] | [string];
+    isArchived: boolean;
     bandName: string;
     website: [] | [string];
     genre: string;
+    isFaved: boolean;
     submitterEmail: [] | [string];
+    isShortlisted: boolean;
     trackBlobs: Array<_ExternalBlob>;
     epkBlob: [] | [_ExternalBlob];
 }): Promise<{
@@ -467,10 +514,13 @@ async function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promi
     socialLinks: SocialLinks;
     submittedAt: Int;
     specificGenre?: string;
+    isArchived: boolean;
     bandName: string;
     website?: string;
     genre: string;
+    isFaved: boolean;
     submitterEmail?: string;
+    isShortlisted: boolean;
     trackBlobs: Array<ExternalBlob>;
     epkBlob?: ExternalBlob;
 }> {
@@ -482,10 +532,13 @@ async function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promi
         socialLinks: from_candid_SocialLinks_n16(_uploadFile, _downloadFile, value.socialLinks),
         submittedAt: value.submittedAt,
         specificGenre: record_opt_to_undefined(from_candid_opt_n15(_uploadFile, _downloadFile, value.specificGenre)),
+        isArchived: value.isArchived,
         bandName: value.bandName,
         website: record_opt_to_undefined(from_candid_opt_n15(_uploadFile, _downloadFile, value.website)),
         genre: value.genre,
+        isFaved: value.isFaved,
         submitterEmail: record_opt_to_undefined(from_candid_opt_n15(_uploadFile, _downloadFile, value.submitterEmail)),
+        isShortlisted: value.isShortlisted,
         trackBlobs: await from_candid_vec_n18(_uploadFile, _downloadFile, value.trackBlobs),
         epkBlob: record_opt_to_undefined(await from_candid_opt_n20(_uploadFile, _downloadFile, value.epkBlob))
     };
@@ -546,14 +599,20 @@ async function from_candid_vec_n10(_uploadFile: (file: ExternalBlob) => Promise<
 async function from_candid_vec_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_ExternalBlob>): Promise<Array<ExternalBlob>> {
     return await Promise.all(value.map(async (x)=>await from_candid_ExternalBlob_n19(_uploadFile, _downloadFile, x)));
 }
-async function to_candid_ExternalBlob_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob): Promise<_ExternalBlob> {
+async function to_candid_ExternalBlob_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob): Promise<_ExternalBlob> {
     return await _uploadFile(value);
 }
-function to_candid_SocialLinks_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SocialLinks): _SocialLinks {
-    return to_candid_record_n26(_uploadFile, _downloadFile, value);
+function to_candid_SocialLinks_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SocialLinks): _SocialLinks {
+    return to_candid_record_n30(_uploadFile, _downloadFile, value);
 }
-function to_candid_SubmissionStatus_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SubmissionStatus): _SubmissionStatus {
-    return to_candid_variant_n31(_uploadFile, _downloadFile, value);
+function to_candid_SubmissionLabel_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SubmissionLabel): _SubmissionLabel {
+    return to_candid_variant_n27(_uploadFile, _downloadFile, value);
+}
+function to_candid_SubmissionStatus_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SubmissionStatus): _SubmissionStatus {
+    return to_candid_variant_n35(_uploadFile, _downloadFile, value);
+}
+function to_candid_Tab_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Tab): _Tab {
+    return to_candid_variant_n25(_uploadFile, _downloadFile, value);
 }
 function to_candid_UserRole_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n9(_uploadFile, _downloadFile, value);
@@ -564,13 +623,22 @@ function to_candid__CaffeineStorageRefillInformation_n2(_uploadFile: (file: Exte
 function to_candid_opt_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation | null): [] | [__CaffeineStorageRefillInformation] {
     return value === null ? candid_none() : candid_some(to_candid__CaffeineStorageRefillInformation_n2(_uploadFile, _downloadFile, value));
 }
-function to_candid_opt_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: string | null): [] | [string] {
+function to_candid_opt_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: string | null): [] | [string] {
     return value === null ? candid_none() : candid_some(value);
 }
-async function to_candid_opt_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob | null): Promise<[] | [_ExternalBlob]> {
-    return value === null ? candid_none() : candid_some(await to_candid_ExternalBlob_n28(_uploadFile, _downloadFile, value));
+async function to_candid_opt_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob | null): Promise<[] | [_ExternalBlob]> {
+    return value === null ? candid_none() : candid_some(await to_candid_ExternalBlob_n32(_uploadFile, _downloadFile, value));
 }
-function to_candid_record_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    proposed_top_up_amount?: bigint;
+}): {
+    proposed_top_up_amount: [] | [bigint];
+} {
+    return {
+        proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
+    };
+}
+function to_candid_record_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     soundcloud?: string;
     instagram?: string;
     spotify?: string;
@@ -588,16 +656,41 @@ function to_candid_record_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         youtube: value.youtube ? candid_some(value.youtube) : candid_none()
     };
 }
-function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    proposed_top_up_amount?: bigint;
-}): {
-    proposed_top_up_amount: [] | [bigint];
+function to_candid_variant_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Tab): {
+    newSubmissions: null;
+} | {
+    shortlisted: null;
+} | {
+    archived: null;
+} | {
+    faved: null;
 } {
-    return {
-        proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
-    };
+    return value == Tab.newSubmissions ? {
+        newSubmissions: null
+    } : value == Tab.shortlisted ? {
+        shortlisted: null
+    } : value == Tab.archived ? {
+        archived: null
+    } : value == Tab.faved ? {
+        faved: null
+    } : value;
 }
-function to_candid_variant_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SubmissionStatus): {
+function to_candid_variant_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SubmissionLabel): {
+    shortlisted: null;
+} | {
+    archived: null;
+} | {
+    faved: null;
+} {
+    return value == SubmissionLabel.shortlisted ? {
+        shortlisted: null
+    } : value == SubmissionLabel.archived ? {
+        archived: null
+    } : value == SubmissionLabel.faved ? {
+        faved: null
+    } : value;
+}
+function to_candid_variant_n35(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: SubmissionStatus): {
     pending: null;
 } | {
     rejected: null;
@@ -631,8 +724,8 @@ function to_candid_variant_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         guest: null
     } : value;
 }
-async function to_candid_vec_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<ExternalBlob>): Promise<Array<_ExternalBlob>> {
-    return await Promise.all(value.map(async (x)=>await to_candid_ExternalBlob_n28(_uploadFile, _downloadFile, x)));
+async function to_candid_vec_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<ExternalBlob>): Promise<Array<_ExternalBlob>> {
+    return await Promise.all(value.map(async (x)=>await to_candid_ExternalBlob_n32(_uploadFile, _downloadFile, x)));
 }
 export interface CreateActorOptions {
     agent?: Agent;

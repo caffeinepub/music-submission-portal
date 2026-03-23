@@ -21,6 +21,7 @@ import { useRef, useState } from "react";
 import { SiSoundcloud, SiSpotify } from "react-icons/si";
 import { toast } from "sonner";
 import { ExternalBlob } from "../backend";
+import { createActorWithConfig } from "../config";
 import { useActor } from "../hooks/useActor";
 
 const GENRE_OPTIONS = [
@@ -42,8 +43,23 @@ const ROLE_OPTIONS = [
   "Label Owner",
 ];
 
+const isValidEmail = (email: string): boolean =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
+const isValidInstagram = (url: string): boolean =>
+  !url.trim() || /instagram\.com/i.test(url.trim());
+
+const isValidSoundcloud = (url: string): boolean =>
+  !url.trim() || /soundcloud\.com/i.test(url.trim());
+
+const isValidSpotify = (url: string): boolean =>
+  !url.trim() || /spotify\.com/i.test(url.trim());
+
+const isValidYoutube = (url: string): boolean =>
+  !url.trim() || /(youtube\.com|youtu\.be)/i.test(url.trim());
+
 export default function SubmissionForm() {
-  const { actor } = useActor();
+  const { actor, isFetching } = useActor();
   const [bandName, setBandName] = useState("");
   const [genre, setGenre] = useState("");
   const [specificGenre, setSpecificGenre] = useState("");
@@ -70,16 +86,27 @@ export default function SubmissionForm() {
     const errs: string[] = [];
     if (!submitterName.trim()) errs.push("Your Name is required.");
     if (!submitterEmail.trim()) errs.push("Your Email is required.");
+    else if (!isValidEmail(submitterEmail))
+      errs.push("Your Email must be a valid email address.");
     if (!submitterRole) errs.push("Role / Position is required.");
     if (!bandName.trim()) errs.push("Band / Artist Name is required.");
     if (!genre) errs.push("Genre is required.");
-    if (
+    const noSocialLink =
       !instagram.trim() &&
       !spotify.trim() &&
       !soundcloud.trim() &&
-      !youtube.trim()
-    )
-      errs.push("At least one Social Media Link is required.");
+      !youtube.trim();
+    if (noSocialLink) errs.push("At least one Social Media Link is required.");
+    else {
+      if (instagram.trim() && !isValidInstagram(instagram))
+        errs.push("Instagram URL must be a valid instagram.com link.");
+      if (soundcloud.trim() && !isValidSoundcloud(soundcloud))
+        errs.push("SoundCloud URL must be a valid soundcloud.com link.");
+      if (spotify.trim() && !isValidSpotify(spotify))
+        errs.push("Spotify URL must be a valid spotify.com link.");
+      if (youtube.trim() && !isValidYoutube(youtube))
+        errs.push("YouTube URL must be a valid youtube.com or youtu.be link.");
+    }
     if (trackFiles.length === 0)
       errs.push("At least one Music Track is required.");
     if (!disclaimerChecked) errs.push("You must agree to the disclaimer.");
@@ -120,9 +147,21 @@ export default function SubmissionForm() {
     const errs = getValidationErrors();
     setValidationErrors(errs);
     if (errs.length > 0) return;
-    if (!actor) {
-      toast.error("Not connected to backend. Please wait.");
-      return;
+
+    // Resolve actor: use cached hook actor, or create a fresh one as fallback
+    let resolvedActor = actor;
+    if (!resolvedActor) {
+      try {
+        resolvedActor = await createActorWithConfig();
+      } catch (fallbackErr) {
+        console.error("Fallback actor creation failed:", fallbackErr);
+        toast.error(
+          isFetching
+            ? "Still connecting to the backend — please try again in a moment."
+            : "Not connected to backend. Please refresh the page and try again.",
+        );
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -154,29 +193,42 @@ export default function SubmissionForm() {
       }
 
       const socialLinks = {
-        instagram: instagram || undefined,
-        spotify: spotify || undefined,
-        soundcloud: soundcloud || undefined,
-        youtube: youtube || undefined,
+        instagram: instagram.trim() || undefined,
+        spotify: spotify.trim() || undefined,
+        soundcloud: soundcloud.trim() || undefined,
+        youtube: youtube.trim() || undefined,
       };
 
-      await actor.submitBand(
-        bandName,
+      await resolvedActor.submitBand(
+        bandName.trim(),
         genre,
-        specificGenre || null,
-        website || null,
-        submitterName || null,
-        submitterEmail || null,
-        submitterRole || null,
+        specificGenre.trim() || null,
+        website.trim() || null,
+        submitterName.trim() || null,
+        submitterEmail.trim() || null,
+        submitterRole.trim() || null,
         socialLinks,
         epkBlob,
         trackBlobs,
       );
       setSuccess(true);
       toast.success("Submission received! We'll be in touch.");
-    } catch (err) {
-      console.error(err);
-      toast.error("Submission failed. Please try again.");
+    } catch (err: any) {
+      console.error("Submission error:", err);
+      const msg: string = err?.message || "";
+      if (/size|too large/i.test(msg)) {
+        toast.error("File too large. Please keep tracks under 50MB each.");
+      } else if (/timeout|timed out/i.test(msg)) {
+        toast.error(
+          "Upload timed out. Try smaller files or a faster connection.",
+        );
+      } else {
+        toast.error(
+          `Submission failed: ${
+            msg || "Unknown error. Check console for details."
+          }`,
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -307,7 +359,7 @@ export default function SubmissionForm() {
                 </Label>
                 <Input
                   id="submitterEmail"
-                  type="email"
+                  type="text"
                   value={submitterEmail}
                   onChange={(e) => setSubmitterEmail(e.target.value)}
                   placeholder="you@example.com"
@@ -319,6 +371,13 @@ export default function SubmissionForm() {
                     Your Email is required.
                   </p>
                 )}
+                {submitAttempted &&
+                  submitterEmail.trim() &&
+                  !isValidEmail(submitterEmail) && (
+                    <p className="text-xs text-destructive mt-1">
+                      Please enter a valid email address.
+                    </p>
+                  )}
               </div>
               <div className="space-y-2">
                 <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
@@ -447,49 +506,85 @@ export default function SubmissionForm() {
               At least one is required.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex items-center gap-2">
-                <Instagram className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <Input
-                  value={instagram}
-                  onChange={(e) => setInstagram(e.target.value)}
-                  placeholder="Instagram URL"
-                  data-ocid="submission.instagram.input"
-                  className="bg-secondary border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-primary"
-                />
+              <div>
+                <div className="flex items-center gap-2">
+                  <Instagram className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  <Input
+                    value={instagram}
+                    onChange={(e) => setInstagram(e.target.value)}
+                    placeholder="https://instagram.com/yourband"
+                    data-ocid="submission.instagram.input"
+                    className="bg-secondary border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-primary"
+                  />
+                </div>
+                {submitAttempted &&
+                  instagram.trim() &&
+                  !isValidInstagram(instagram) && (
+                    <p className="text-xs text-destructive mt-1 ml-6">
+                      Must be a valid instagram.com URL.
+                    </p>
+                  )}
               </div>
-              <div className="flex items-center gap-2">
-                <SiSpotify className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <Input
-                  value={spotify}
-                  onChange={(e) => setSpotify(e.target.value)}
-                  placeholder="Spotify URL"
-                  data-ocid="submission.spotify.input"
-                  className="bg-secondary border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-primary"
-                />
+              <div>
+                <div className="flex items-center gap-2">
+                  <SiSpotify className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  <Input
+                    value={spotify}
+                    onChange={(e) => setSpotify(e.target.value)}
+                    placeholder="https://open.spotify.com/artist/..."
+                    data-ocid="submission.spotify.input"
+                    className="bg-secondary border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-primary"
+                  />
+                </div>
+                {submitAttempted &&
+                  spotify.trim() &&
+                  !isValidSpotify(spotify) && (
+                    <p className="text-xs text-destructive mt-1 ml-6">
+                      Must be a valid spotify.com URL.
+                    </p>
+                  )}
               </div>
-              <div className="flex items-center gap-2">
-                <SiSoundcloud className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <Input
-                  value={soundcloud}
-                  onChange={(e) => setSoundcloud(e.target.value)}
-                  placeholder="SoundCloud URL"
-                  data-ocid="submission.soundcloud.input"
-                  className="bg-secondary border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-primary"
-                />
+              <div>
+                <div className="flex items-center gap-2">
+                  <SiSoundcloud className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  <Input
+                    value={soundcloud}
+                    onChange={(e) => setSoundcloud(e.target.value)}
+                    placeholder="https://soundcloud.com/yourband"
+                    data-ocid="submission.soundcloud.input"
+                    className="bg-secondary border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-primary"
+                  />
+                </div>
+                {submitAttempted &&
+                  soundcloud.trim() &&
+                  !isValidSoundcloud(soundcloud) && (
+                    <p className="text-xs text-destructive mt-1 ml-6">
+                      Must be a valid soundcloud.com URL.
+                    </p>
+                  )}
               </div>
-              <div className="flex items-center gap-2">
-                <Youtube className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <Input
-                  value={youtube}
-                  onChange={(e) => setYoutube(e.target.value)}
-                  placeholder="YouTube URL"
-                  data-ocid="submission.youtube.input"
-                  className="bg-secondary border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-primary"
-                />
+              <div>
+                <div className="flex items-center gap-2">
+                  <Youtube className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  <Input
+                    value={youtube}
+                    onChange={(e) => setYoutube(e.target.value)}
+                    placeholder="https://youtube.com/@yourband"
+                    data-ocid="submission.youtube.input"
+                    className="bg-secondary border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-primary"
+                  />
+                </div>
+                {submitAttempted &&
+                  youtube.trim() &&
+                  !isValidYoutube(youtube) && (
+                    <p className="text-xs text-destructive mt-1 ml-6">
+                      Must be a valid youtube.com or youtu.be URL.
+                    </p>
+                  )}
               </div>
             </div>
             {submitAttempted && noSocialLink && (
-              <p className="text-xs text-destructive mt-1">
+              <p className="text-xs text-destructive mt-2">
                 At least one social media link is required.
               </p>
             )}
@@ -646,7 +741,7 @@ export default function SubmissionForm() {
                 was created by human artists and is not AI-generated; (2) I own
                 the rights to this music or have obtained the necessary
                 permissions to share it with Indie City; and (3) I understand
-                that submission does not guarantee airplay on Indie City.
+                that submission does not guarantee airplay on Indie City Radio.
               </span>
             </label>
             {submitAttempted && !disclaimerChecked && (
