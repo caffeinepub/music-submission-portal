@@ -202,6 +202,12 @@ export default function SubmissionForm() {
     setValidationErrors([]);
   };
 
+  const noSocialLink =
+    !instagram.trim() &&
+    !spotify.trim() &&
+    !soundcloud.trim() &&
+    !youtube.trim();
+
   if (success) {
     return (
       <section id="submit" className="py-24 px-4">
@@ -286,6 +292,11 @@ export default function SubmissionForm() {
                   data-ocid="submission.submitter_name.input"
                   className="bg-secondary border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-primary h-9 text-sm"
                 />
+                {submitAttempted && !submitterName.trim() && (
+                  <p className="text-xs text-destructive mt-1">
+                    Your Name is required.
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label
@@ -303,6 +314,11 @@ export default function SubmissionForm() {
                   data-ocid="submission.submitter_email.input"
                   className="bg-secondary border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-primary h-9 text-sm"
                 />
+                {submitAttempted && !submitterEmail.trim() && (
+                  <p className="text-xs text-destructive mt-1">
+                    Your Email is required.
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
@@ -323,6 +339,11 @@ export default function SubmissionForm() {
                     ))}
                   </SelectContent>
                 </Select>
+                {submitAttempted && !submitterRole && (
+                  <p className="text-xs text-destructive mt-1">
+                    Role / Position is required.
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -344,6 +365,11 @@ export default function SubmissionForm() {
                 data-ocid="submission.band_name.input"
                 className="bg-secondary border-border text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-primary"
               />
+              {submitAttempted && !bandName.trim() && (
+                <p className="text-xs text-destructive mt-1">
+                  Band / Artist Name is required.
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label
@@ -385,6 +411,11 @@ export default function SubmissionForm() {
                   ))}
                 </SelectContent>
               </Select>
+              {submitAttempted && !genre && (
+                <p className="text-xs text-destructive mt-1">
+                  Genre is required.
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label
@@ -457,6 +488,11 @@ export default function SubmissionForm() {
                 />
               </div>
             </div>
+            {submitAttempted && noSocialLink && (
+              <p className="text-xs text-destructive mt-1">
+                At least one social media link is required.
+              </p>
+            )}
           </div>
 
           {/* EPK Upload */}
@@ -514,7 +550,7 @@ export default function SubmissionForm() {
               Upload up to 3 tracks (MP3 or WAV, max 50MB each).
             </p>
 
-            {/* Drop zone - using a wrapping label so clicking opens file dialog */}
+            {/* Drop zone */}
             <label
               htmlFor="track-upload"
               onDragOver={handleDragOver}
@@ -588,6 +624,11 @@ export default function SubmissionForm() {
                 ))}
               </ul>
             )}
+            {submitAttempted && trackFiles.length === 0 && (
+              <p className="text-xs text-destructive mt-2">
+                At least one music track is required.
+              </p>
+            )}
           </div>
 
           {/* Disclaimer */}
@@ -608,6 +649,11 @@ export default function SubmissionForm() {
                 that submission does not guarantee airplay on Indie City.
               </span>
             </label>
+            {submitAttempted && !disclaimerChecked && (
+              <p className="text-xs text-destructive mt-2">
+                You must agree to the disclaimer.
+              </p>
+            )}
           </div>
 
           {/* Submit button + validation errors */}

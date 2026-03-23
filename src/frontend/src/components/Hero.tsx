@@ -42,7 +42,7 @@ export default function Hero() {
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white uppercase tracking-tight leading-tight drop-shadow-2xl mb-4">
             GET HEARD ON
             <br />
-            <span className="text-teal">FREQUENCY FM.</span>
+            <span className="text-teal">INDIE CITY RADIO.</span>
           </h1>
           <p className="text-xl sm:text-2xl font-medium text-white/90 mb-8 drop-shadow-lg">
             Submit Your Music Today.

@@ -42,7 +42,7 @@ export default function Header({ onAdminClick }: HeaderProps) {
             <Radio className="w-6 h-6 text-teal" />
           </div>
           <span className="font-extrabold text-sm tracking-widest text-foreground uppercase">
-            Frequency <span className="text-teal">FM</span>
+            Indie City <span className="text-teal">Radio</span>
           </span>
         </a>
 
