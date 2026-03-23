@@ -127,7 +127,7 @@ export default function Header({
             ) : isAuthenticated ? (
               "LOGOUT"
             ) : (
-              "ADMIN LOGIN"
+              "LOGIN"
             )}
           </button>
         </div>

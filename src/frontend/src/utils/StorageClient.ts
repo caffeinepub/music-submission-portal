@@ -85,11 +85,6 @@ function isRetriableError(error: any): boolean {
     return true;
   }
 
-  // Retry ICP v3 response body errors (transient boundary node issues)
-  if (errorMessage.includes("expected v3 response body")) {
-    return true;
-  }
-
   // Don't retry validation/logic errors
   if (
     errorMessage.includes("validation") ||
@@ -487,19 +482,17 @@ export class StorageClient {
   }
 
   private async getCertificate(hash: string): Promise<Uint8Array> {
-    return await withRetry(async () => {
-      const args = IDL.encode([IDL.Text], [hash]);
-      const result = await this.agent.call(this.backendCanisterId, {
-        methodName: "_caffeineStorageCreateCertificate",
-        arg: args,
-      });
-      const respone = result.response.body;
-      if (isV3ResponseBody(respone)) {
-        console.log("Certificate:", respone.certificate);
-        return respone.certificate;
-      }
-      throw new Error("Expected v3 response body");
+    const args = IDL.encode([IDL.Text], [hash]);
+    const result = await this.agent.call(this.backendCanisterId, {
+      methodName: "_caffeineStorageCreateCertificate",
+      arg: args,
     });
+    const respone = result.response.body;
+    if (isV3ResponseBody(respone)) {
+      console.log("Certificate:", respone.certificate);
+      return respone.certificate;
+    }
+    throw new Error("Expected v3 response body");
   }
 
   public async putFile(
