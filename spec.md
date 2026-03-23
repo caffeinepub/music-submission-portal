@@ -1,25 +1,25 @@
 # Music Submission Portal
 
 ## Current State
-Public form with: Band/Artist Name, Website, Artist Bio, Social Links (Instagram, Facebook, Spotify, SoundCloud, X/Twitter), EPK upload, 3 track uploads.
+- Backend `access-control.mo` uses dynamic "first login = admin" logic
+- `getUserRole` traps (Runtime.trap) for unregistered principals
+- Admin principal `mqpqn-...` is NOT hardcoded in access control
+- `getCallerUserRole` query throws for any unregistered user including the intended admin
+- Frontend `Header.tsx` depends on `getCallerUserRole` returning `UserRole.admin` to show Dashboard link
+- Form submission IDL error related to socialLinks passing `undefined` values
 
 ## Requested Changes (Diff)
 
 ### Add
-- Genre dropdown (required) + Specific Genre text (optional) after Band/Artist Name row
-- YouTube in Social Links
-- Your Name, Your Email, Role/Position dropdown (required, same line) in Music Tracks section
-- Backend: genre, specificGenre, submitterName, submitterEmail, submitterRole; youtube in SocialLinks
+- Hardcoded admin principal constant in `access-control.mo`
 
 ### Modify
-- submitBand backend signature
-- Admin dashboard display
+- `access-control.mo`: hardcode `mqpqn-qsle4-usj5i-uytxj-pzbwu-3ppcx-cqjq5-qtktf-nwxvx-szbij-bae` as permanent admin; `getUserRole` returns `#guest` instead of trapping for unknown users; `isAdmin` checks hardcoded principal directly
+- `SubmissionForm.tsx`: pass social links cleanly (omit undefined keys rather than passing undefined values) to avoid IDL encoding issues
 
 ### Remove
-- Artist Bio
-- Facebook and X/Twitter social fields
+- Nothing
 
 ## Implementation Plan
-1. Update Motoko backend
-2. Update SubmissionForm.tsx
-3. Update AdminDashboard.tsx
+1. Rewrite `access-control.mo` to hardcode admin principal, fix getUserRole to not trap
+2. Fix SubmissionForm socialLinks construction to only include non-empty values
