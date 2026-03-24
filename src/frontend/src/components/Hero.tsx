@@ -8,13 +8,13 @@ export default function Hero({ onSubmissionsClick }: HeroProps) {
   return (
     <section
       id="home"
-      className="relative min-h-[92vh] flex items-center justify-center overflow-hidden"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden"
     >
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage:
-            "url('/assets/uploads/pexels-bence-szemerey-337043-6782458_dark_bw-019d1d69-e265-777e-a026-17457a1ced7e-1.jpg')",
+            "url('/assets/uploads/pexels-bence-szemerey-337043-6782458-019d1d83-ad7f-72ae-ba6e-ac8e099994b4-1.jpg')",
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-background" />
