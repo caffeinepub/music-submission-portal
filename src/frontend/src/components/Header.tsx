@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Radio } from "lucide-react";
+import { useState } from "react";
 import { UserRole } from "../backend";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useGetCallerRole } from "../hooks/useQueries";
@@ -22,10 +23,23 @@ export default function Header({
   const { data: role } = useGetCallerRole();
   const queryClient = useQueryClient();
   const isAuthenticated = !!identity;
+  const [copied, setCopied] = useState(false);
 
   const isAdmin = isAuthenticated && role === UserRole.admin;
 
   const isLoggingIn = loginStatus === "logging-in";
+
+  const principalFull = identity?.getPrincipal().toString() ?? "";
+  const principalShort = principalFull
+    ? `${principalFull.slice(0, 8)}...${principalFull.slice(-4)}`
+    : "";
+
+  const handleCopyPrincipal = async () => {
+    if (!principalFull) return;
+    await navigator.clipboard.writeText(principalFull);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   const handleAuthClick = async () => {
     if (isAuthenticated) {
@@ -107,23 +121,36 @@ export default function Header({
               {currentPage === "admin" ? "← HOME" : "DASHBOARD"}
             </button>
           )}
-          <button
-            type="button"
-            onClick={handleAuthClick}
-            disabled={isLoggingIn || isInitializing}
-            data-ocid="header.admin_login.button"
-            className="px-4 py-2 text-xs font-bold tracking-widest uppercase border border-teal text-teal rounded-full hover:bg-teal hover:text-primary-foreground transition-all disabled:opacity-50 flex items-center gap-2"
-          >
-            {isLoggingIn ? (
-              <>
-                <Loader2 className="w-3 h-3 animate-spin" /> Logging in...
-              </>
-            ) : isAuthenticated ? (
-              "LOGOUT"
-            ) : (
-              "LOGIN"
+          <div className="flex flex-col items-center gap-0.5">
+            <button
+              type="button"
+              onClick={handleAuthClick}
+              disabled={isLoggingIn || isInitializing}
+              data-ocid="header.admin_login.button"
+              className="px-4 py-2 text-xs font-bold tracking-widest uppercase border border-teal text-teal rounded-full hover:bg-teal hover:text-primary-foreground transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              {isLoggingIn ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin" /> Logging in...
+                </>
+              ) : isAuthenticated ? (
+                "LOGOUT"
+              ) : (
+                "LOGIN"
+              )}
+            </button>
+            {isAuthenticated && principalShort && (
+              <button
+                type="button"
+                onClick={handleCopyPrincipal}
+                data-ocid="header.principal.button"
+                title="Click to copy your full principal"
+                className="text-[10px] font-mono text-foreground/40 hover:text-foreground/70 transition-colors leading-tight"
+              >
+                {copied ? "Copied!" : principalShort}
+              </button>
             )}
-          </button>
+          </div>
         </div>
       </div>
     </header>

@@ -319,10 +319,9 @@ export default function SubmissionForm() {
           <img
             src="/assets/uploads/icr-smaller-white-019d1da2-b587-73a8-8985-47b4d45c0cb5-1.png"
             alt="Indie City Radio"
-            className="mx-auto mb-2"
-            style={{ maxWidth: "520px", height: "auto" }}
+            className="w-full max-w-[520px] mx-auto mb-2 h-auto"
           />
-          <h2 className="text-4xl font-extrabold text-green-500 uppercase tracking-tight mt-3 mb-3">
+          <h2 className="text-4xl font-extrabold text-teal uppercase tracking-tight mt-3 mb-3">
             ARTIST MUSIC SUBMISSION
           </h2>
           <p className="text-muted-foreground text-sm max-w-lg mx-auto">

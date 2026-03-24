@@ -1,7 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Archive,
+  CheckCircle2,
   ChevronDown,
+  Copy,
   Download,
   Heart,
   Instagram,
@@ -27,6 +29,35 @@ import {
   useLabelSubmission,
 } from "../hooks/useQueries";
 import AudioPlayer from "./AudioPlayer";
+
+const DOWNLOADED_FILES_KEY = "indie_city_downloaded_files";
+
+function useDownloadedFiles() {
+  const [downloadedFiles, setDownloadedFiles] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem(DOWNLOADED_FILES_KEY);
+      if (raw) return new Set(JSON.parse(raw) as string[]);
+    } catch {
+      // ignore
+    }
+    return new Set<string>();
+  });
+
+  const markDownloaded = (id: string) => {
+    setDownloadedFiles((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      try {
+        localStorage.setItem(DOWNLOADED_FILES_KEY, JSON.stringify([...next]));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
+
+  return { downloadedFiles, markDownloaded };
+}
 
 type SortKey = "date" | "genre";
 
@@ -71,11 +102,15 @@ function SubmissionAccordionRow({
   index,
   isOpen,
   onToggle,
+  downloadedFiles,
+  markDownloaded,
 }: {
   submission: Submission;
   index: number;
   isOpen: boolean;
   onToggle: () => void;
+  downloadedFiles: Set<string>;
+  markDownloaded: (id: string) => void;
 }) {
   const labelMutation = useLabelSubmission();
 
@@ -105,6 +140,14 @@ function SubmissionAccordionRow({
       toast.error("Failed to update label");
     }
   };
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success("Copied!");
+    });
+  };
+
+  const epkFileId = `${submission.id}:epk`;
 
   return (
     <div
@@ -190,11 +233,22 @@ function SubmissionAccordionRow({
                   </div>
                 </div>
 
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-[0.18em] text-teal mb-2.5">
-                    Genre
-                  </p>
-                  <p className="text-sm text-foreground">{genreDisplay}</p>
+                {/* Band/Artist */}
+                <div className="flex gap-6">
+                  <div className="flex-1">
+                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-teal mb-2.5">
+                      Band / Artist
+                    </p>
+                    <p className="text-sm text-foreground font-semibold">
+                      {submission.bandName}
+                    </p>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[9px] font-black uppercase tracking-[0.18em] text-teal mb-2.5">
+                      Genre
+                    </p>
+                    <p className="text-sm text-foreground">{genreDisplay}</p>
+                  </div>
                 </div>
 
                 <div>
@@ -255,15 +309,31 @@ function SubmissionAccordionRow({
                     <p className="text-[9px] font-black uppercase tracking-[0.18em] text-teal mb-2.5">
                       EPK
                     </p>
-                    <a
-                      href={submission.epkBlob.getDirectURL()}
-                      download
-                      data-ocid={`admin.submission.epk.${index}`}
-                      className="inline-flex items-center gap-1.5 text-xs text-teal hover:underline"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      {submission.epkFilename || "Download EPK"}
-                    </a>
+                    <div className="flex items-center gap-1.5">
+                      <a
+                        href={submission.epkBlob.getDirectURL()}
+                        download
+                        data-ocid={`admin.submission.epk.${index}`}
+                        onClick={() => markDownloaded(epkFileId)}
+                        className="inline-flex items-center gap-1.5 text-xs text-teal hover:underline"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        {submission.epkFilename || "Download EPK"}
+                      </a>
+                      {submission.epkFilename && (
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(submission.epkFilename!)}
+                          className="flex-shrink-0 flex items-center justify-center w-6 h-6 text-muted-foreground hover:text-teal transition-colors"
+                          title="Copy filename"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      )}
+                      {downloadedFiles.has(epkFileId) && (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -280,6 +350,7 @@ function SubmissionAccordionRow({
                         const url = blob.getDirectURL();
                         const filename =
                           submission.trackFilenames?.[i] || `Track ${i + 1}`;
+                        const trackFileId = `${submission.id}:track:${i}`;
                         return (
                           <div
                             key={`track-${submission.id}-${i}`}
@@ -292,11 +363,23 @@ function SubmissionAccordionRow({
                               href={url}
                               download={filename}
                               data-ocid={`admin.submission.track_download.${index}`}
+                              onClick={() => markDownloaded(trackFileId)}
                               className="flex-shrink-0 flex items-center justify-center w-7 h-7 text-muted-foreground hover:text-teal border border-border hover:border-teal rounded transition-colors"
                               title={`Download ${filename}`}
                             >
                               <Download className="w-3.5 h-3.5" />
                             </a>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(filename)}
+                              className="flex-shrink-0 flex items-center justify-center w-7 h-7 text-muted-foreground hover:text-teal border border-border hover:border-teal rounded transition-colors"
+                              title="Copy filename"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                            {downloadedFiles.has(trackFileId) && (
+                              <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                            )}
                           </div>
                         );
                       })}
@@ -396,6 +479,7 @@ function SubmissionsTabContent({ tab }: { tab: Tab }) {
   const { data: submissions, isLoading } = useGetSubmissionsByTab(tab);
   const [openId, setOpenId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("date");
+  const { downloadedFiles, markDownloaded } = useDownloadedFiles();
 
   const sorted = [...(submissions ?? [])].sort((a, b) => {
     if (sortKey === "genre") return a.genre.localeCompare(b.genre);
@@ -465,6 +549,8 @@ function SubmissionsTabContent({ tab }: { tab: Tab }) {
           index={i + 1}
           isOpen={openId === sub.id}
           onToggle={() => setOpenId(openId === sub.id ? null : sub.id)}
+          downloadedFiles={downloadedFiles}
+          markDownloaded={markDownloaded}
         />
       ))}
     </div>
