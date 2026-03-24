@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Radio } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UserRole } from "../backend";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import { useGetCallerRole } from "../hooks/useQueries";
@@ -33,6 +33,13 @@ export default function Header({
   const principalShort = principalFull
     ? `${principalFull.slice(0, 8)}...${principalFull.slice(-4)}`
     : "";
+
+  // Re-fetch role immediately after login
+  useEffect(() => {
+    if (isAuthenticated) {
+      queryClient.invalidateQueries({ queryKey: ["callerRole"] });
+    }
+  }, [isAuthenticated, queryClient]);
 
   const handleCopyPrincipal = async () => {
     if (!principalFull) return;

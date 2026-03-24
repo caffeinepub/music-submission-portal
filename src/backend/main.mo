@@ -272,4 +272,14 @@ actor {
 
     filtered.map(toView).toArray();
   };
+
+  // Re-seed admin principals on every upgrade so dashboard access persists
+  // across deployments without requiring a data reset.
+  system func postupgrade() {
+    let draftAdmin = Principal.fromText("mqpqn-qsle4-usj5i-uytxj-pzbwu-3ppcx-cqjq5-qtktf-nwxvx-szbij-bae");
+    let liveAdmin  = Principal.fromText("jkkxl-3bedb-xmmyb-nf33k-gynuj-ufu2s-c5gce-gm7x7-x44kq-lyjg7-dae");
+    accessControlState.userRoles.add(draftAdmin, #admin);
+    accessControlState.userRoles.add(liveAdmin,  #admin);
+    accessControlState.adminAssigned := true;
+  };
 };

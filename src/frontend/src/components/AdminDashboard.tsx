@@ -59,6 +59,17 @@ function useDownloadedFiles() {
   return { downloadedFiles, markDownloaded };
 }
 
+const DASHBOARD_GENRE_OPTIONS = [
+  "Rock",
+  "Metal",
+  "Punk",
+  "Alternative",
+  "Pop",
+  "Electronic",
+  "Hip-Hop/Rap",
+  "Other",
+];
+
 type SortKey = "date" | "genre";
 
 // Fetch all four tab counts in parallel
@@ -479,12 +490,23 @@ function SubmissionsTabContent({ tab }: { tab: Tab }) {
   const { data: submissions, isLoading } = useGetSubmissionsByTab(tab);
   const [openId, setOpenId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("date");
+  const [genreFilter, setGenreFilter] = useState<string | null>(null);
   const { downloadedFiles, markDownloaded } = useDownloadedFiles();
 
-  const sorted = [...(submissions ?? [])].sort((a, b) => {
-    if (sortKey === "genre") return a.genre.localeCompare(b.genre);
-    return Number(b.submittedAt - a.submittedAt);
-  });
+  // Reset genre filter when tab changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: tab is a prop and is a valid dependency
+  useEffect(() => {
+    setGenreFilter(null);
+  }, [tab]);
+
+  const allSubmissions = submissions ?? [];
+
+  const sorted = [...allSubmissions]
+    .filter((s) => !genreFilter || s.genre === genreFilter)
+    .sort((a, b) => {
+      if (sortKey === "genre") return a.genre.localeCompare(b.genre);
+      return Number(b.submittedAt - a.submittedAt);
+    });
 
   if (isLoading) {
     return (
@@ -497,7 +519,7 @@ function SubmissionsTabContent({ tab }: { tab: Tab }) {
     );
   }
 
-  if (!sorted.length) {
+  if (!allSubmissions.length) {
     return (
       <div
         data-ocid="admin.submissions.empty_state"
@@ -510,6 +532,39 @@ function SubmissionsTabContent({ tab }: { tab: Tab }) {
 
   return (
     <div>
+      {/* Genre Filter Chips */}
+      <div className="flex flex-wrap gap-2 px-6 py-3 border-b border-border bg-muted/5">
+        <button
+          type="button"
+          onClick={() => setGenreFilter(null)}
+          className={`text-[10px] font-bold px-3 py-1 rounded-full border transition-colors ${
+            !genreFilter
+              ? "bg-teal text-primary-foreground border-teal"
+              : "text-muted-foreground border-border hover:border-teal hover:text-teal"
+          }`}
+        >
+          All
+        </button>
+        {DASHBOARD_GENRE_OPTIONS.map((g) => {
+          const count = allSubmissions.filter((s) => s.genre === g).length;
+          return (
+            <button
+              key={g}
+              type="button"
+              onClick={() => setGenreFilter(genreFilter === g ? null : g)}
+              className={`text-[10px] font-bold px-3 py-1 rounded-full border transition-colors ${
+                genreFilter === g
+                  ? "bg-teal text-primary-foreground border-teal"
+                  : "text-muted-foreground border-border hover:border-teal hover:text-teal"
+              }`}
+            >
+              {g}
+              {count > 0 && <span className="opacity-60"> ({count})</span>}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Sort Controls */}
       <div className="flex items-center justify-end gap-2 px-6 py-3 border-b border-border bg-muted/5">
         <span className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-black mr-1">
@@ -542,17 +597,25 @@ function SubmissionsTabContent({ tab }: { tab: Tab }) {
       </div>
 
       {/* Submission Rows */}
-      {sorted.map((sub, i) => (
-        <SubmissionAccordionRow
-          key={sub.id}
-          submission={sub}
-          index={i + 1}
-          isOpen={openId === sub.id}
-          onToggle={() => setOpenId(openId === sub.id ? null : sub.id)}
-          downloadedFiles={downloadedFiles}
-          markDownloaded={markDownloaded}
-        />
-      ))}
+      {sorted.length === 0 ? (
+        <div className="py-10 text-center">
+          <p className="text-muted-foreground text-sm">
+            No submissions match this genre.
+          </p>
+        </div>
+      ) : (
+        sorted.map((sub, i) => (
+          <SubmissionAccordionRow
+            key={sub.id}
+            submission={sub}
+            index={i + 1}
+            isOpen={openId === sub.id}
+            onToggle={() => setOpenId(openId === sub.id ? null : sub.id)}
+            downloadedFiles={downloadedFiles}
+            markDownloaded={markDownloaded}
+          />
+        ))
+      )}
     </div>
   );
 }
