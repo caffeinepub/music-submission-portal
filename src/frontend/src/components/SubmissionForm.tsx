@@ -307,7 +307,7 @@ export default function SubmissionForm() {
   }
 
   return (
-    <section id="submit" className="py-24 px-4">
+    <section id="submit" className="pt-8 pb-24 px-4">
       <div className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -316,10 +316,13 @@ export default function SubmissionForm() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <span className="text-xs font-bold tracking-[0.35em] text-teal uppercase">
-            1. PUBLIC SUBMISSION FORM
-          </span>
-          <h2 className="text-4xl font-extrabold text-foreground uppercase tracking-tight mt-3 mb-3">
+          <img
+            src="/assets/uploads/icr-smaller-white-019d1da2-b587-73a8-8985-47b4d45c0cb5-1.png"
+            alt="Indie City Radio"
+            className="mx-auto mb-2"
+            style={{ maxWidth: "520px", height: "auto" }}
+          />
+          <h2 className="text-4xl font-extrabold text-green-500 uppercase tracking-tight mt-3 mb-3">
             ARTIST MUSIC SUBMISSION
           </h2>
           <p className="text-muted-foreground text-sm max-w-lg mx-auto">
