@@ -14,8 +14,7 @@ export default function Hero({ onSubmissionsClick }: HeroProps) {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage:
-            "url('/assets/generated/hero-concert-crowd.dim_1600x700.jpg')",
-          filter: "grayscale(100%)",
+            "url('/assets/uploads/pexels-bence-szemerey-337043-6782458_dark_bw-019d1d69-e265-777e-a026-17457a1ced7e-1.jpg')",
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-background" />
