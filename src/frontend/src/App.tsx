@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AdminDashboard from "./components/AdminDashboard";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
@@ -19,20 +19,46 @@ const queryClient = new QueryClient({
 
 type Page = "home" | "submissions" | "admin";
 
+function getInitialPage(): Page {
+  const path = window.location.pathname;
+  if (path === "/submit" || path === "/submissions") return "submissions";
+  if (path === "/admin") return "admin";
+  return "home";
+}
+
 function AppContent() {
-  const [page, setPage] = useState<Page>("home");
+  const [page, setPage] = useState<Page>(getInitialPage);
+
+  const navigateTo = (newPage: Page) => {
+    setPage(newPage);
+    const path =
+      newPage === "submissions"
+        ? "/submit"
+        : newPage === "admin"
+          ? "/admin"
+          : "/";
+    window.history.pushState(null, "", path);
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setPage(getInitialPage());
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header
-        onAdminClick={() => setPage("admin")}
-        onHomeClick={() => setPage("home")}
-        onSubmissionsClick={() => setPage("submissions")}
+        onAdminClick={() => navigateTo("admin")}
+        onHomeClick={() => navigateTo("home")}
+        onSubmissionsClick={() => navigateTo("submissions")}
         currentPage={page}
       />
       <main className="flex-1 pt-16">
         {page === "home" && (
-          <Hero onSubmissionsClick={() => setPage("submissions")} />
+          <Hero onSubmissionsClick={() => navigateTo("submissions")} />
         )}
         {page === "submissions" && <SubmissionForm />}
         {page === "admin" && <AdminDashboard />}

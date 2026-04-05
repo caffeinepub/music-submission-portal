@@ -14,13 +14,15 @@ import AccessControl "authorization/access-control";
 actor {
   let accessControlState = AccessControl.initState();
 
-  // Seed permanent admin principals (draft + live) so they are always admin
+  // Seed permanent admin principals (draft + live + additional) so they are always admin
   // regardless of deployment order or URL.
   do {
     let draftAdmin = Principal.fromText("mqpqn-qsle4-usj5i-uytxj-pzbwu-3ppcx-cqjq5-qtktf-nwxvx-szbij-bae");
     let liveAdmin  = Principal.fromText("jkkxl-3bedb-xmmyb-nf33k-gynuj-ufu2s-c5gce-gm7x7-x44kq-lyjg7-dae");
+    let extraAdmin = Principal.fromText("w67br-plqx4-3af3n-fxd3v-ckloa-z3pqd-jd7nj-7g6nf-fk32w-nly4z-gae");
     accessControlState.userRoles.add(draftAdmin, #admin);
     accessControlState.userRoles.add(liveAdmin,  #admin);
+    accessControlState.userRoles.add(extraAdmin, #admin);
     accessControlState.adminAssigned := true;
   };
 
@@ -278,8 +280,10 @@ actor {
   system func postupgrade() {
     let draftAdmin = Principal.fromText("mqpqn-qsle4-usj5i-uytxj-pzbwu-3ppcx-cqjq5-qtktf-nwxvx-szbij-bae");
     let liveAdmin  = Principal.fromText("jkkxl-3bedb-xmmyb-nf33k-gynuj-ufu2s-c5gce-gm7x7-x44kq-lyjg7-dae");
+    let extraAdmin = Principal.fromText("w67br-plqx4-3af3n-fxd3v-ckloa-z3pqd-jd7nj-7g6nf-fk32w-nly4z-gae");
     accessControlState.userRoles.add(draftAdmin, #admin);
     accessControlState.userRoles.add(liveAdmin,  #admin);
+    accessControlState.userRoles.add(extraAdmin, #admin);
     accessControlState.adminAssigned := true;
   };
 };
