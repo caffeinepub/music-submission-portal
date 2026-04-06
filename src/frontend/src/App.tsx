@@ -38,11 +38,13 @@ function AppContent() {
           ? "/admin"
           : "/";
     window.history.pushState(null, "", path);
+    window.scrollTo(0, 0);
   };
 
   useEffect(() => {
     const handlePopState = () => {
       setPage(getInitialPage());
+      window.scrollTo(0, 0);
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);

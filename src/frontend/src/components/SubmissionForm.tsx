@@ -41,6 +41,7 @@ const ROLE_OPTIONS = [
   "Manager",
   "Promoter",
   "Label Owner",
+  "A&R",
 ];
 
 const isValidEmail = (email: string): boolean =>

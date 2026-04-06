@@ -9,8 +9,12 @@ export default function Footer() {
   const socialLinks = [
     { icon: SiInstagram, label: "Instagram", href: "https://instagram.com" },
     { icon: SiSpotify, label: "Spotify", href: "https://spotify.com" },
-    { icon: SiX, label: "X", href: "https://x.com" },
-    { icon: SiYoutube, label: "YouTube", href: "https://youtube.com" },
+    { icon: SiX, label: "X", href: "https://x.com/IndieCityRocks" },
+    {
+      icon: SiYoutube,
+      label: "YouTube",
+      href: "https://www.youtube.com/@IndieCityRadio",
+    },
   ];
 
   return (
