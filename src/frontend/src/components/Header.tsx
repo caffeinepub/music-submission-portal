@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Radio } from "lucide-react";
+import { Loader2, Menu, Radio, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { UserRole } from "../backend";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
@@ -24,6 +24,7 @@ export default function Header({
   const queryClient = useQueryClient();
   const isAuthenticated = !!identity;
   const [copied, setCopied] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const isAdmin = isAuthenticated && role === UserRole.admin;
 
@@ -49,6 +50,7 @@ export default function Header({
   };
 
   const handleAuthClick = async () => {
+    setIsMenuOpen(false);
     if (isAuthenticated) {
       await clear();
       queryClient.clear();
@@ -65,6 +67,7 @@ export default function Header({
   };
 
   const handleNavClick = (item: string) => {
+    setIsMenuOpen(false);
     if (item === "HOME") {
       onHomeClick();
     } else if (item === "SUBMISSIONS") {
@@ -74,9 +77,19 @@ export default function Header({
     }
   };
 
+  const handleAdminClick = () => {
+    setIsMenuOpen(false);
+    if (currentPage === "admin") {
+      onHomeClick();
+    } else {
+      onAdminClick();
+    }
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        {/* Logo */}
         <button
           type="button"
           onClick={onHomeClick}
@@ -90,12 +103,29 @@ export default function Header({
           </span>
         </button>
 
-        <nav className="hidden md:flex items-center gap-8">
+        {/* Desktop nav — hidden below lg */}
+        <nav className="hidden lg:flex items-center gap-8">
           {["HOME", "LISTEN LIVE", "SUBMISSIONS", "ABOUT", "CONTACT"].map(
             (item) => {
               const isActive =
                 (item === "HOME" && currentPage === "home") ||
                 (item === "SUBMISSIONS" && currentPage === "submissions");
+
+              if (item === "LISTEN LIVE") {
+                return (
+                  <a
+                    key={item}
+                    href="https://indiecity-radio-gjq.caffeine.xyz/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-ocid="nav.listen_live.link"
+                    className="text-xs font-semibold tracking-widest transition-colors hover:text-teal text-foreground/80"
+                  >
+                    {item}
+                  </a>
+                );
+              }
+
               return (
                 <button
                   key={item}
@@ -113,22 +143,26 @@ export default function Header({
           )}
         </nav>
 
+        {/* Right side: dashboard + auth (desktop) + hamburger (mobile) */}
         <div className="flex items-center gap-3">
+          {/* Dashboard link — desktop only */}
           {isAdmin && (
             <button
               type="button"
-              onClick={currentPage === "admin" ? onHomeClick : onAdminClick}
+              onClick={handleAdminClick}
               data-ocid="header.admin_dashboard.button"
-              className={`hidden sm:block text-xs font-semibold tracking-widest transition-colors ${
+              className={`hidden lg:block text-xs font-semibold tracking-widest transition-colors ${
                 currentPage === "admin"
                   ? "text-teal"
                   : "text-foreground/70 hover:text-teal"
               }`}
             >
-              {currentPage === "admin" ? "← HOME" : "DASHBOARD"}
+              {currentPage === "admin" ? "\u2190 HOME" : "DASHBOARD"}
             </button>
           )}
-          <div className="flex flex-col items-center gap-0.5">
+
+          {/* Auth button + principal — desktop only */}
+          <div className="hidden lg:flex flex-col items-center gap-0.5">
             <button
               type="button"
               onClick={handleAuthClick}
@@ -158,8 +192,120 @@ export default function Header({
               </button>
             )}
           </div>
+
+          {/* Hamburger button — mobile/tablet only (below lg) */}
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            data-ocid="header.hamburger.button"
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            className="lg:hidden p-2 text-foreground/80 hover:text-teal transition-colors"
+          >
+            {isMenuOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
+          </button>
         </div>
       </div>
+
+      {/* Mobile dropdown menu */}
+      {isMenuOpen && (
+        <div
+          data-ocid="header.mobile_menu.panel"
+          className="lg:hidden bg-background/95 backdrop-blur-sm border-b border-border"
+        >
+          <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col gap-1">
+            {/* Nav links */}
+            {["HOME", "LISTEN LIVE", "SUBMISSIONS", "ABOUT", "CONTACT"].map(
+              (item) => {
+                const isActive =
+                  (item === "HOME" && currentPage === "home") ||
+                  (item === "SUBMISSIONS" && currentPage === "submissions");
+
+                if (item === "LISTEN LIVE") {
+                  return (
+                    <a
+                      key={item}
+                      href="https://indiecity-radio-gjq.caffeine.xyz/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsMenuOpen(false)}
+                      data-ocid="mobile_nav.listen_live.link"
+                      className="text-xs font-semibold tracking-widest py-3 border-b border-border/40 transition-colors hover:text-teal text-foreground/80"
+                    >
+                      {item}
+                    </a>
+                  );
+                }
+
+                return (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => handleNavClick(item)}
+                    data-ocid={`mobile_nav.${item.toLowerCase().replace(" ", "_")}.link`}
+                    className={`text-xs font-semibold tracking-widest py-3 border-b border-border/40 text-left transition-colors hover:text-teal ${
+                      isActive ? "text-teal" : "text-foreground/80"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                );
+              },
+            )}
+
+            {/* Dashboard link (admin only) */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={handleAdminClick}
+                data-ocid="mobile_nav.admin_dashboard.button"
+                className={`text-xs font-semibold tracking-widest py-3 border-b border-border/40 text-left transition-colors ${
+                  currentPage === "admin"
+                    ? "text-teal"
+                    : "text-foreground/70 hover:text-teal"
+                }`}
+              >
+                {currentPage === "admin" ? "\u2190 HOME" : "DASHBOARD"}
+              </button>
+            )}
+
+            {/* Auth button */}
+            <div className="pt-3 pb-1 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleAuthClick}
+                disabled={isLoggingIn || isInitializing}
+                data-ocid="mobile_nav.login.button"
+                className="w-full px-4 py-2 text-xs font-bold tracking-widest uppercase border border-teal text-teal rounded-full hover:bg-teal hover:text-primary-foreground transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isLoggingIn ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin" /> Logging in...
+                  </>
+                ) : isAuthenticated ? (
+                  "LOGOUT"
+                ) : (
+                  "LOGIN"
+                )}
+              </button>
+              {isAuthenticated && principalShort && (
+                <button
+                  type="button"
+                  onClick={handleCopyPrincipal}
+                  data-ocid="mobile_nav.principal.button"
+                  title="Click to copy your full principal"
+                  className="text-[10px] font-mono text-foreground/40 hover:text-foreground/70 transition-colors text-center"
+                >
+                  {copied ? "Copied!" : principalShort}
+                </button>
+              )}
+            </div>
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

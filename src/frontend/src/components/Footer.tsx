@@ -33,15 +33,30 @@ export default function Footer() {
           {/* Links */}
           <nav className="flex flex-wrap justify-center gap-6">
             {["Listen Live", "About Us", "Privacy Policy", "Contact"].map(
-              (link) => (
-                <a
-                  key={link}
-                  href="#home"
-                  className="text-xs text-muted-foreground hover:text-teal transition-colors tracking-wide"
-                >
-                  {link}
-                </a>
-              ),
+              (link) => {
+                if (link === "Listen Live") {
+                  return (
+                    <a
+                      key={link}
+                      href="https://indiecity-radio-gjq.caffeine.xyz/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-muted-foreground hover:text-teal transition-colors tracking-wide"
+                    >
+                      {link}
+                    </a>
+                  );
+                }
+                return (
+                  <a
+                    key={link}
+                    href="#home"
+                    className="text-xs text-muted-foreground hover:text-teal transition-colors tracking-wide"
+                  >
+                    {link}
+                  </a>
+                );
+              },
             )}
           </nav>
 

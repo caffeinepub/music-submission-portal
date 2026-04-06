@@ -4,7 +4,7 @@ import { IDL } from "@icp-sdk/core/candid";
 type Headers = Record<string, string>;
 
 const MAXIMUM_CONCURRENT_UPLOADS = 10;
-const MAX_RETRIES = 5;
+const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
 const MAX_DELAY_MS = 30000;
 
@@ -61,11 +61,6 @@ async function withRetry<T>(operation: () => Promise<T>): Promise<T> {
 
 function isRetriableError(error: any): boolean {
   const errorMessage = error?.message?.toLowerCase() || "";
-
-  // Explicitly retry the v3 response body error (transient ICP boundary node issue)
-  if (errorMessage.includes("expected v3 response body")) {
-    return true;
-  }
 
   // Don't retry client errors (4xx except specific ones)
   if (error?.response?.status) {
@@ -487,18 +482,17 @@ export class StorageClient {
   }
 
   private async getCertificate(hash: string): Promise<Uint8Array> {
-    return await withRetry(async () => {
-      const args = IDL.encode([IDL.Text], [hash]);
-      const result = await this.agent.call(this.backendCanisterId, {
-        methodName: "_caffeineStorageCreateCertificate",
-        arg: args,
-      });
-      const response = result.response.body;
-      if (isV3ResponseBody(response)) {
-        return response.certificate;
-      }
-      throw new Error("Expected v3 response body");
+    const args = IDL.encode([IDL.Text], [hash]);
+    const result = await this.agent.call(this.backendCanisterId, {
+      methodName: "_caffeineStorageCreateCertificate",
+      arg: args,
     });
+    const respone = result.response.body;
+    if (isV3ResponseBody(respone)) {
+      console.log("Certificate:", respone.certificate);
+      return respone.certificate;
+    }
+    throw new Error("Expected v3 response body");
   }
 
   public async putFile(
